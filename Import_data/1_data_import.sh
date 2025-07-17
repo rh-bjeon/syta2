@@ -67,6 +67,8 @@ echo "========================================================"
 echo "⚙️ 3. Systemd 서비스를 등록하고 실행합니다..."
 echo "========================================================"
 
+SERVICE_FILE="/etc/systemd/system/data_import.service"
+
 # 1. Systemd 서비스 파일 생성
 echo "📝 서비스 파일을 생성합니다: ${SERVICE_FILE}"
 sudo tee "$SERVICE_FILE" > /dev/null <<EOF
