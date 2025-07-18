@@ -118,4 +118,29 @@ if ! firewall-cmd --query-port=${APP_PORT}/tcp --permanent > /dev/null 2>&1; the
 fi
 
 echo "SELinux 컨텍스트를 설정하고 네트워크 연결을 허용합니다."
-# chcon: 웹 서버가
+# chcon: 웹 서버가 애플리케이션 파일에 접근할 수 있도록 컨텍스트 설정
+chcon -R -t httpd_sys_content_t "$APP_TARGET_DIR"
+# setsebool: httpd(apache)가 네트워크에 연결할 수 있도록 허용
+setsebool -P httpd_can_network_connect 1
+echo "방화벽 및 SELinux 구성 완료."
+echo
+
+# 8. 서비스 활성화 및 시작
+echo ">>> [단계 7/7] 서비스 활성화 및 시작"
+systemctl daemon-reload
+systemctl restart ${SERVICE_NAME}.service
+systemctl enable ${SERVICE_NAME}.service
+echo "서비스가 활성화되고 시작되었습니다."
+echo
+
+# --- 최종 확인 ---
+echo "=================================================="
+echo "OCP 설치 도우미 애플리케이션 배포가 완료되었습니다."
+echo
+echo "다음 명령어로 서비스 상태를 확인할 수 있습니다:"
+echo "sudo systemctl status ${SERVICE_NAME}.service"
+echo
+echo "웹 브라우저에서 아래 주소로 접속하세요:"
+echo "http://<서버_IP_주소>:${APP_PORT}"
+echo "=================================================="
+
