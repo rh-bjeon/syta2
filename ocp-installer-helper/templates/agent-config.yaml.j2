@@ -22,6 +22,7 @@ hosts:
         - name: {{ node.interfaces_neme_bond }}
           type: bond
           state: up
+          mac-address: {{ node.mac_address }}
           ipv4:
             enabled: true
             address:
@@ -31,12 +32,13 @@ hosts:
             mode: {{ node.link_aggregation_mode }}
             options: "miimon={{ node.miimon }} xmit_hash_policy={{ node.xmit_hash_policy }}"
           port:
-            - {{ node.port1 }}
-            - {{ node.port2 }}
-        {%- elif node.interface_type == 'ethernet' %}
+            - name: {{ node.port1 }}
+            - name: {{ node.port2 }}
+        {%- else %}
         - name: {{ node.interface_name }}
           type: ethernet
           state: up
+          mac-address: {{ node.mac_address }}
           ipv4:
             enabled: true
             address:
