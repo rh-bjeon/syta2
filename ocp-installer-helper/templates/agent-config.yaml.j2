@@ -1,1 +1,50 @@
-
+apiVersion: v1alpha1
+kind: AgentConfig
+metadata:
+  name: {{ metadata_name }}
+rendezvousIP: {{ rendezvousIP }}
+{% if additionalNTPSources %}
+additionalNTPSources:
+  - {{ additionalNTPSources }}
+{% endif %}
+hosts:
+{% for node in nodes %}
+  - hostname: {{ node.hostname }}
+    role: {{ node.role }}
+    interfaces:
+      - name: {{ node.interface_name }}
+        macAddress: {{ node.mac_address }}
+    rootDeviceHints:
+      deviceName: {{ node.disk_deviceName }}
+    networkConfig:
+      interfaces:
+        {%- if node.interface_type == 'bond' %}
+        - name: {{ node.interfaces_neme_bond }}
+          type: bond
+          state: up
+          ipv4:
+            enabled: true
+            address:
+              - ip: {{ node.ip_address }}
+                prefix-length: {{ node.prefix_length }}
+          link-aggregation:
+            mode: {{ node.link_aggregation_mode }}
+            options: "miimon={{ node.miimon }} xmit_hash_policy={{ node.xmit_hash_policy }}"
+          port:
+            - {{ node.port1 }}
+            - {{ node.port2 }}
+        {%- elif node.interface_type == 'ethernet' %}
+        - name: {{ node.interface_name }}
+          type: ethernet
+          state: up
+          ipv4:
+            enabled: true
+            address:
+              - ip: {{ node.ip_address }}
+                prefix-length: {{ node.prefix_length }}
+        {%- endif %}
+      dns-resolver:
+        config:
+          server:
+            - {{ node.dns_resolver }}
+{% endfor %}
