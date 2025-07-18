@@ -112,10 +112,10 @@ echo
 # 7. 방화벽 및 SELinux 구성
 echo ">>> [단계 6/7] 방화벽 및 SELinux 구성"
 echo "방화벽에서 ${APP_PORT}/tcp 포트를 영구적으로 허용합니다."
-if ! firewall-cmd --query-port=${APP_PORT}/tcp --permanent > /dev/null 2>&1; then
-    firewall-cmd --permanent --add-port=${APP_PORT}/tcp
-    firewall-cmd --reload
-fi
+#if ! firewall-cmd --query-port=${APP_PORT}/tcp --permanent > /dev/null 2>&1; then
+#    firewall-cmd --permanent --add-port=${APP_PORT}/tcp
+#    firewall-cmd --reload
+#fi
 
 echo "SELinux 컨텍스트를 설정하고 네트워크 연결을 허용합니다."
 # chcon: 웹 서버가 애플리케이션 파일에 접근할 수 있도록 컨텍스트 설정
