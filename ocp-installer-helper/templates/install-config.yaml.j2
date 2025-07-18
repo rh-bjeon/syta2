@@ -1,5 +1,13 @@
 apiVersion: v1
 baseDomain: {{ baseDomain }}
+compute:
+- hyperthreading: Enabled
+  name: worker
+  replicas: 0
+controlPlane:
+  hyperthreading: Enabled
+  name: master
+  replicas: 3
 metadata:
   name: {{ metadataName }}
 networking:
@@ -12,15 +20,15 @@ networking:
 platform:
   none: {}
 fips: false
-pullSecret: '{{ pullSecret | replace("\n", "") }}'
+pullSecret: '{{ pullSecret | replace("\n", "") | replace(" ", "") }}'
 sshKey: '{{ sshKey | trim }}'
 {% if imageContentSources %}
 imageContentSources:
 {{ imageContentSources | indent(2) }}
 {% endif %}
-{% if proxy_enabled %}
+{% if proxy_enabled and httpProxy and httpsProxy %}
 proxy:
   httpProxy: {{ httpProxy }}
   httpsProxy: {{ httpsProxy }}
-  noProxy: {{ noProxy }}
+  {% if noProxy %}noProxy: {{ noProxy }}{% endif %}
 {% endif %}
