@@ -1,1 +1,112 @@
-1
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCP 설치 도우미</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>OCP(OpenShift) 설치 자동화 도우미</h1>
+
+    <div class="section-container">
+        <h2>섹션 0: 미러 레지스트리 구성</h2>
+        <form action="/configure-mirror" method="post" target="_blank">
+            <label for="ocp_version">OCP Version:</label>
+            <select name="ocp_version" id="ocp_version">
+                <option value="4.14">4.14</option>
+                <option value="4.13">4.13</option>
+                <option value="4.12">4.12</option>
+            </select><br><br>
+            
+            <label for="reg_domain">Registry Domain:</label>
+            <input type="text" name="reg_domain" placeholder="registry.example.com" required><br>
+            <label for="reg_host">Registry Hostname:</label>
+            <input type="text" name="reg_host" placeholder="ocp-registry" required><br>
+            <label for="reg_port">Registry Port:</label>
+            <input type="number" name="reg_port" value="5000" required><br><br>
+
+            <label for="reg_user">Registry User:</label>
+            <input type="text" name="reg_user" required><br>
+            <label for="reg_password">Registry Password:</label>
+            <input type="password" name="reg_password" required><br><br>
+
+            <button type="submit">미러 레지스트리 구성 및 정보 저장</button>
+        </form>
+    </div>
+
+    <hr>
+
+    <div class="section-container">
+        <h2>섹션 1: 노드 정보 (Excel) 업로드</h2>
+        <form action="/upload-nodes" method="post" enctype="multipart/form-data" target="_blank">
+            <input type="file" name="node_info_file" accept=".xlsx" required>
+            <button type="submit">업로드 및 저장</button>
+        </form>
+    </div>
+
+    <hr>
+
+    <div class="section-container">
+        <h2>섹션 2: <code>install-config.yaml</code> 생성</h2>
+        <form action="/generate-install-config" method="post">
+            <label for="key_name">SSH Key Name:</label>
+            <input type="text" id="key_name" value="ocp_key">
+            <button type="button" onclick="generateSshKey()">SSH Key 생성</button>
+            <br><br>
+
+            <button type="button" onclick="loadClusterInfoForInstallConfig()">저장된 정보 불러오기</button><br>
+            <label>Base Domain:</label> <input type="text" name="baseDomain" id="baseDomain"><br>
+            <label>Metadata Name:</label> <input type="text" name="metadataName" id="metadataName"><br>
+            <label>Cluster Network CIDR:</label> <input type="text" name="clusterNetworkCIDR" id="clusterNetworkCIDR"><br>
+            <label>Service Network:</label> <input type="text" name="serviceNetwork" id="serviceNetwork"><br>
+            <label>Host Prefix:</label> <input type="text" name="hostPrefix" id="hostPrefix"><br><br>
+            
+            <input type="checkbox" id="proxy_enabled" name="proxy_enabled" onchange="toggleProxy()">
+            <label for="proxy_enabled">Proxy 사용</label>
+            <div id="proxy_settings" style="display:none;">
+                <label>HTTP Proxy:</label> <input type="text" name="httpProxy" id="httpProxy"><br>
+                <label>HTTPS Proxy:</label> <input type="text" name="httpsProxy" id="httpsProxy"><br>
+                <label>No Proxy:</label> <input type="text" name="noProxy" id="noProxy"><br>
+            </div>
+            <br>
+            
+            <label>SSH Public Key:</label><br>
+            <textarea name="sshKey" id="sshKey" rows="4" cols="80"></textarea><br>
+            <button type="button" onclick="insertSshKey()">생성된 SSH Key 넣기</button>
+            <br><br>
+            
+            <label>Secret Type:</label>
+            <input type="radio" name="secret_type" value="pull_secret" checked> Pull Secret
+            <input type="radio" name="secret_type" value="mirror_secret"> Mirror Registry Secret
+            <button type="button" onclick="loadMirrorSecret()">Mirror Secret 불러오기</button><br>
+            <textarea name="pullSecret" id="pullSecret" rows="6" cols="80" placeholder="여기에 Secret 내용을 붙여넣거나 불러오세요."></textarea><br><br>
+            
+            <button type="submit"><code>install-config.yaml</code> 생성하기</button>
+        </form>
+    </div>
+
+    <hr>
+    
+    <div class="section-container">
+        <h2>섹션 4: <code>agent-config.yaml</code> 생성</h2>
+        <form id="agent-config-form" action="/generate-agent-config" method="post">
+            <button type="button" onclick="loadClusterInfoForAgentConfig()">저장된 정보 불러오기</button><br>
+            <label>Metadata Name:</label> <input type="text" name="metadata_name" id="agent_metadata_name"><br>
+            <label>Rendezvous IP:</label> <input type="text" name="rendezvousIP" id="rendezvousIP"><br>
+            <label>Additional NTP Sources:</label> <input type="text" name="additionalNTPSources" id="additionalNTPSources" placeholder="time.example.com"><br><br>
+            
+            <h3>노드 구성</h3>
+            <div id="nodes-container">
+                </div>
+            <button type="button" onclick="addNodeSection()">노드 추가</button>
+            <br><br>
+            
+            <input type="hidden" name="nodes_data" id="nodes_data_hidden">
+            <button type="submit"><code>agent-config.yaml</code> 생성하기</button>
+        </form>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
