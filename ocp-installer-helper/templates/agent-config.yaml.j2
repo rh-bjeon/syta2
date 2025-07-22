@@ -12,41 +12,58 @@ hosts:
   - hostname: {{ node.hostname }}
     role: {{ node.role }}
     interfaces:
-      - name: {{ node.interface_name }}
-        macAddress: {{ node.mac_address }}
+    {%- for iface in node.interfaces %}
+      - name: {{ iface.name }}
+        macAddress: {{ iface.macAddress }}
+    {%- endfor %}
     rootDeviceHints:
-      deviceName: {{ node.disk_deviceName }}
+      deviceName: {{ node.rootDeviceHints.deviceName }}
     networkConfig:
       interfaces:
-        {%- if node.interface_type == 'bond' %}
-        - name: {{ node.interfaces_neme_bond }}
-          type: bond
-          state: up
-          mac-address: {{ node.mac_address }}
+      {%- for iface in node.networkConfig.interfaces %}
+        - name: {{ iface.name }}
+          type: {{ iface.type }}
+          state: {{ iface.state }}
+          {% if iface.mtu %}mtu: {{ iface.mtu }}{% endif %}
+          mac-address: {{ iface['mac-address'] }}
           ipv4:
-            enabled: true
+            enabled: {{ iface.ipv4.enabled }}
+            dhcp: {{ iface.ipv4.dhcp }}
             address:
-              - ip: {{ node.ip_address }}
-                prefix-length: {{ node.prefix_length }}
+            {%- for addr in iface.ipv4.address %}
+              - ip: {{ addr.ip }}
+                prefix-length: {{ addr['prefix-length'] }}
+            {%- endfor %}
+          ipv6:
+            enabled: {{ iface.ipv6.enabled }}
+          {% if iface.type == 'bond' %}
           link-aggregation:
-            mode: {{ node.link_aggregation_mode }}
-            options: "miimon={{ node.miimon }} xmit_hash_policy={{ node.xmit_hash_policy }}"
-          port:
-            - name: {{ node.port1 }}
-            - name: {{ node.port2 }}
-        {%- else %}
-        - name: {{ node.interface_name }}
-          type: ethernet
-          state: up
-          mac-address: {{ node.mac_address }}
-          ipv4:
-            enabled: true
-            address:
-              - ip: {{ node.ip_address }}
-                prefix-length: {{ node.prefix_length }}
-        {%- endif %}
+            mode: {{ iface['link-aggregation'].mode }}
+            {# [수정 2] miimon 형식을 중첩 구조로 렌더링 #}
+            options:
+              miimon: "{{ iface['link-aggregation'].options.miimon }}"
+            port:
+            {%- for port in iface['link-aggregation'].port %}
+              - {{ port }}
+            {%- endfor %}
+          {% endif %}
+      {%- endfor %}
+      {%- if node.networkConfig.routes %}
+      routes:
+        config:
+        {%- for route in node.networkConfig.routes.config %}
+          - destination: {{ route.destination }}
+            next-hop-address: {{ route['next-hop-address'] }}
+            next-hop-interface: {{ route['next-hop-interface'] }}
+            table-id: {{ route['table-id'] }}
+        {%- endfor %}
+      {%- endif %}
+      {%- if node.networkConfig['dns-resolver'] %}
       dns-resolver:
         config:
           server:
-            - {{ node.dns_resolver }}
+          {%- for server in node.networkConfig['dns-resolver'].config.server %}
+            - {{ server }}
+          {%- endfor %}
+      {%- endif %}
 {% endfor %}
