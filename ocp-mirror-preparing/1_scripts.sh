@@ -60,6 +60,14 @@ echo "패키지 설치 완료."
 echo
 
 
+sudo bash -c 'cat <<EOF > /etc/sudoers.d/ocp-preparer
+apache ALL=(ALL) NOPASSWD: /usr/bin/tar
+apache ALL=(ALL) NOPASSWD: /usr/bin/chmod
+apache ALL=(ALL) NOPASSWD: /usr/bin/mv
+EOF'
+
+
+
 
 # 2. 기존 디렉터리 정리 및 부모 디렉터리 생성
 echo ">>> [단계 2/7] 배포 디렉터리 준비"
