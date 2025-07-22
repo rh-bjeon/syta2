@@ -74,6 +74,8 @@ sudo semanage fcontext -a -t httpd_sys_rw_content_t "/ocp_install(/.*)?"
 sudo restorecon -Rv /ocp_install
 sudo systemctl restart ocp-mirror-preparing.service
 
+sudo chown apache:apache /usr/share/httpd
+
 
 # 2. 기존 디렉터리 정리 및 부모 디렉터리 생성
 echo ">>> [단계 2/7] 배포 디렉터리 준비"
