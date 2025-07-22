@@ -1,34 +1,43 @@
 apiVersion: v1
 baseDomain: {{ baseDomain }}
+metadata:
+  name: {{ metadataName }}
 compute:
-- hyperthreading: Enabled
+- architecture: amd64
+  hyperthreading: Enabled
   name: worker
-  replicas: 0
+  replicas: 3
 controlPlane:
+  architecture: amd64
   hyperthreading: Enabled
   name: master
   replicas: 3
-metadata:
-  name: {{ metadataName }}
 networking:
-  clusterNetwork:
-    - cidr: {{ clusterNetworkCIDR }}
-      hostPrefix: {{ hostPrefix }}
-  serviceNetwork:
-    - {{ serviceNetwork }}
   networkType: OVNKubernetes
+  clusterNetwork:
+  - cidr: {{ clusterNetworkCIDR }}
+    hostPrefix: {{ hostPrefix }}
+  machineNetwork:
+  - cidr: {{ machineNetworkCIDR }}
+  serviceNetwork:
+  - {{ serviceNetwork }}
 platform:
   none: {}
 fips: false
-pullSecret: '{{ pullSecret | replace("\n", "") | replace(" ", "") }}'
-sshKey: '{{ sshKey | trim }}'
 {% if imageContentSources %}
 imageContentSources:
-{{ imageContentSources | indent(2) }}
+{% for item in imageContentSources %}
+- mirrors:
+  {% for mirror in item.mirrors %}
+  - {{ mirror }}
+  {% endfor %}
+  source: {{ item.source }}
+{% endfor %}
 {% endif %}
-{% if proxy_enabled and httpProxy and httpsProxy %}
-proxy:
-  httpProxy: {{ httpProxy }}
-  httpsProxy: {{ httpsProxy }}
-  {% if noProxy %}noProxy: {{ noProxy }}{% endif %}
+pullSecret: |
+{{ pullSecret | indent(2) }}
+sshKey: '{{ sshKey | trim }}'
+{% if additionalTrustBundle %}
+additionalTrustBundle: |
+{{ additionalTrustBundle | indent(2) }}
 {% endif %}
