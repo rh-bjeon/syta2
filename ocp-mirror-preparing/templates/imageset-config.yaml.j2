@@ -1,15 +1,11 @@
 kind: ImageSetConfiguration
-apiVersion: mirror.openshift.io/v1alpha2
-archiveSize: 4
-storageConfig:
-  registry:
-    imageURL: {{ registry }}/mirror/oc-mirror-metadata
-    skipTLS: false
+apiVersion: mirror.openshift.io/v2alpha1
 mirror:
   platform:
     channels:
-    - name: stable-{{ version }}
-      type: ocp
+    - name: stable-{{ majorVersion }}
+      minVersion: {{ minVersion }}
+      maxVersion: {{ maxVersion }}
     graph: true
 {% if operators %}
   operators:
@@ -18,10 +14,6 @@ mirror:
     packages:
     {% for package in catalog_item.packages %}
     - name: {{ package.name }}
-      channels:
-      {% for channel in package.channels %}
-      - name: {{ channel.name }}
-      {% endfor %}
     {% endfor %}
   {% endfor %}
 {% endif %}
@@ -33,4 +25,3 @@ mirror:
   - name: registry.redhat.io/rhel9/mysql-80:latest
   - name: registry.redhat.io/rhel9/nodejs-18:latest
   - name: registry.redhat.io/rhel9/python-39:latest
-  helm: {}
