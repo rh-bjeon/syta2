@@ -12,8 +12,6 @@
     <!-- Section 1: OCP Installer 준비 -->
     <div class="section-container">
         <h2>&lt;&lt; Section 1 : OCP installer 준비 &gt;&gt;</h2>
-        
-        <!-- Section 1-1 -->
         <div class="subsection">
             <h3>1-1 : OCP version 선택</h3>
             <label for="ocp_version_select">설치 OCP 버전 선택:</label>
@@ -22,8 +20,6 @@
             </select>
             <button id="btn_fetch_versions">버전 목록 새로고침</button>
         </div>
-
-        <!-- Section 1-2 -->
         <div class="subsection">
             <h3>1-2 : 설치 프로그램 다운로드 및 압축풀기</h3>
             <div class="action-item">
@@ -99,10 +95,24 @@
     <!-- Section 3: Mirror Image 준비 -->
     <div class="section-container">
         <h2>&lt;&lt; Section 3 : Mirror Image 준비 &gt;&gt;</h2>
+        
         <div class="subsection">
-            <label for="registry_url">Registry 주소:</label>
-            <input type="text" id="registry_url" placeholder="예: my-registry.example.com:5000" style="width: 300px;"><br>
-            <small>ImageSetConfiguration의 `imageURL`에 사용됩니다.</small>
+            <h3>3-1 : Pull Secret 적용</h3>
+            <button onclick="window.open('https://console.redhat.com/openshift/downloads', '_blank')">Pullsecret 확인하기</button>
+            <br><br>
+            <label for="pull_secret_input">Pullsecret 입력:</label><br>
+            <textarea id="pull_secret_input" rows="8" cols="80" placeholder="Red Hat에서 복사한 pull secret 전체를 여기에 붙여넣으세요."></textarea><br>
+            <button id="btn_apply_pull_secret">적용</button>
+            <pre class="output-box" id="output_apply_pull_secret"></pre>
+        </div>
+
+        <div class="subsection">
+            <h3>3-2 : ImageSetConfiguration 생성</h3>
+            <label>Version:</label> <input type="text" id="major_version_display" readonly><br>
+            <label for="min_version_select">Min Version:</label>
+            <select id="min_version_select"></select><br>
+            <label for="max_version_select">Max Version:</label>
+            <select id="max_version_select"></select><br>
         </div>
 
         <div class="subsection operator-section">
