@@ -61,11 +61,13 @@ echo
 
 
 sudo bash -c 'cat <<EOF > /etc/sudoers.d/ocp-preparer
+# Allow apache user to run specific commands without a password
 apache ALL=(ALL) NOPASSWD: /usr/bin/tar
 apache ALL=(ALL) NOPASSWD: /usr/bin/chmod
 apache ALL=(ALL) NOPASSWD: /usr/bin/mv
+apache ALL=(ALL) NOPASSWD: /usr/bin/mkdir
+apache ALL=(ALL) NOPASSWD: /usr/bin/chown
 EOF'
-
 
 
 
