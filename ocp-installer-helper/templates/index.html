@@ -9,59 +9,61 @@
 <body>
     <h1>OCP(OpenShift) 설치 자동화 도우미</h1>
 
+    <!-- 섹션 0: 미러 레지스트리 구성 -->
     <div class="section-container">
         <h2>섹션 0: 미러 레지스트리 구성</h2>
-        <form action="/configure-mirror" method="post" target="_blank">
+        <form action="/configure-mirror" method="post" target="result_iframe">
             <label for="ocp_version">OCP Version:</label>
             <select name="ocp_version" id="ocp_version">
                 <option value="4.14">4.14</option>
                 <option value="4.13">4.13</option>
                 <option value="4.12">4.12</option>
             </select><br><br>
-            
             <label for="reg_domain">Registry Domain:</label>
             <input type="text" name="reg_domain" placeholder="registry.example.com" required><br>
             <label for="reg_host">Registry Hostname:</label>
             <input type="text" name="reg_host" placeholder="ocp-registry" required><br>
             <label for="reg_port">Registry Port:</label>
             <input type="number" name="reg_port" value="5000" required><br><br>
-
             <label for="reg_user">Registry User:</label>
             <input type="text" name="reg_user" required><br>
             <label for="reg_password">Registry Password:</label>
             <input type="password" name="reg_password" required><br><br>
-
-            <button type="submit">미러 레지스트리 구성 및 정보 저장</button>
+            <button type="submit" data-section="0">미러 레지스트리 구성 및 정보 저장</button>
         </form>
+        <div class="status-box" id="status-message-0"></div>
     </div>
 
     <hr>
 
+    <!-- 섹션 1: 클러스터 정보 업로드 -->
     <div class="section-container">
-        <h2>섹션 1: 노드 정보 (Excel) 업로드</h2>
-        <form action="/upload-nodes" method="post" enctype="multipart/form-data" target="_blank">
-            <input type="file" name="node_info_file" accept=".xlsx" required>
-            <button type="submit">업로드 및 저장</button>
+        <h2>섹션 1: 클러스터 정보 (CSV) 업로드</h2>
+        <p>첫 번째 행에는 Key, 두 번째 행에는 Value를 입력한 CSV 파일을 업로드하세요.</p>
+        <form action="/upload-nodes" method="post" enctype="multipart/form-data" target="result_iframe">
+            <input type="file" name="node_info_file" accept=".csv" required>
+            <button type="submit" data-section="1">업로드 및 저장</button>
         </form>
+        <div class="status-box" id="status-message-1"></div>
     </div>
 
     <hr>
 
+    <!-- 섹션 2: install-config.yaml 생성 -->
     <div class="section-container">
         <h2>섹션 2: <code>install-config.yaml</code> 생성</h2>
-        <form action="/generate-install-config" method="post">
+        <form action="/generate-install-config" method="post" target="result_iframe">
             <label for="key_name">SSH Key Name:</label>
             <input type="text" id="key_name" value="ocp_key">
             <button type="button" onclick="generateSshKey()">SSH Key 생성</button>
             <br><br>
-
-            <button type="button" onclick="loadClusterInfoForInstallConfig()">저장된 정보 불러오기</button><br>
+            <button type="button" onclick="loadClusterInfoForInstallConfig()">저장된 클러스터 정보 불러오기</button><br>
             <label>Base Domain:</label> <input type="text" name="baseDomain" id="baseDomain"><br>
             <label>Metadata Name:</label> <input type="text" name="metadataName" id="metadataName"><br>
+            <label>Machine Network CIDR:</label> <input type="text" name="machineNetworkCIDR" id="machineNetworkCIDR"><br>
             <label>Cluster Network CIDR:</label> <input type="text" name="clusterNetworkCIDR" id="clusterNetworkCIDR"><br>
             <label>Service Network:</label> <input type="text" name="serviceNetwork" id="serviceNetwork"><br>
             <label>Host Prefix:</label> <input type="text" name="hostPrefix" id="hostPrefix"><br><br>
-            
             <input type="checkbox" id="proxy_enabled" name="proxy_enabled" onchange="toggleProxy()">
             <label for="proxy_enabled">Proxy 사용</label>
             <div id="proxy_settings" style="display:none;">
@@ -70,42 +72,49 @@
                 <label>No Proxy:</label> <input type="text" name="noProxy" id="noProxy"><br>
             </div>
             <br>
-            
             <label>SSH Public Key:</label><br>
-            <textarea name="sshKey" id="sshKey" rows="4" cols="80"></textarea><br>
+            <textarea name="sshKey" id="sshKey" rows="10" cols="80"></textarea><br>
             <button type="button" onclick="insertSshKey()">생성된 SSH Key 넣기</button>
             <br><br>
+            <label>Pull Secret:</label><br>
+            <textarea name="pullSecret" id="pullSecret" rows="10" cols="80" placeholder="여기에 pullSecret 내용을 붙여넣으세요."></textarea><br>
+            <button type="button" onclick="loadMirrorSecret()">Mirror Secret 불러오기</button><br><br>
+            <label>Additional Trust Bundle (CA):</label><br>
+            <textarea name="additionalTrustBundle" id="additionalTrustBundle" rows="10" cols="80" placeholder="여기에 PEM 형식의 CA 인증서를 붙여넣으세요."></textarea><br><br>
             
-            <label>Secret Type:</label>
-            <input type="radio" name="secret_type" value="pull_secret" checked> Pull Secret
-            <input type="radio" name="secret_type" value="mirror_secret"> Mirror Registry Secret
-            <button type="button" onclick="loadMirrorSecret()">Mirror Secret 불러오기</button><br>
-            <textarea name="pullSecret" id="pullSecret" rows="6" cols="80" placeholder="여기에 Secret 내용을 붙여넣거나 불러오세요."></textarea><br><br>
-            
-            <button type="submit"><code>install-config.yaml</code> 생성하기</button>
+            <button type="submit" data-section="2"><code>install-config.yaml</code> 생성하기</button>
         </form>
+        <div class="status-box" id="status-message-2"></div>
     </div>
 
     <hr>
     
+    <!-- 섹션 3: agent-config.yaml 생성 -->
     <div class="section-container">
-        <h2>섹션 4: <code>agent-config.yaml</code> 생성</h2>
-        <form id="agent-config-form" action="/generate-agent-config" method="post">
-            <button type="button" onclick="loadClusterInfoForAgentConfig()">저장된 정보 불러오기</button><br>
+        <h2>섹션 3: <code>agent-config.yaml</code> 생성</h2>
+        <form id="agent-config-form" action="/generate-agent-config" method="post" target="result_iframe">
+            <button type="button" onclick="loadClusterInfoForAgentConfig()">공통 정보 불러오기</button><br>
             <label>Metadata Name:</label> <input type="text" name="metadata_name" id="agent_metadata_name"><br>
             <label>Rendezvous IP:</label> <input type="text" name="rendezvousIP" id="rendezvousIP"><br>
-            <label>Additional NTP Sources:</label> <input type="text" name="additionalNTPSources" id="additionalNTPSources" placeholder="time.example.com"><br><br>
-            
+            <label>Additional NTP Sources:</label> <input type="text" name="additionalNTPSources" id="additionalNTPSources"><br><br>
             <h3>노드 구성</h3>
             <div id="nodes-container">
-                </div>
+                <!-- JavaScript가 여기에 동적으로 노드 섹션을 추가합니다. -->
+            </div>
             <button type="button" onclick="addNodeSection()">노드 추가</button>
             <br><br>
-            
+            <button type="button" onclick="populateAllNodeData()">모든 노드 정보 불러오기</button>
+            <br><br>
             <input type="hidden" name="nodes_data" id="nodes_data_hidden">
-            <button type="submit"><code>agent-config.yaml</code> 생성하기</button>
+            <button type="submit" data-section="3"><code>agent-config.yaml</code> 생성하기</button>
         </form>
+        <div class="status-box" id="status-message-3"></div>
     </div>
+
+    <!-- 모든 form의 결과를 받을 공통 iframe -->
+    <iframe name="result_iframe" id="result_iframe" style="display:none;"></iframe>
+    <!-- 폴백(Fallback) 상태 메시지 영역 -->
+    <div id="status-message-fallback" style="margin-top: 20px;"></div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
