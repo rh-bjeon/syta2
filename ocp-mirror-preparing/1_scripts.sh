@@ -51,6 +51,15 @@ echo ">>> 자동 감지된 소스 경로: $SOURCE_DIR"
 echo ">>> 최종 배포될 경로: $APP_TARGET_DIR"
 echo
 
+# 2. 필수 시스템 패키지 설치
+echo ">>> [단계 1/7] 필수 시스템 패키지 설치"
+#dnf install -y python3 python3-pip git gcc python3-devel rsync
+echo "Gunicorn (WSGI 서버)을 설치합니다..."
+sudo pip3 install beautifulsoup4 requests
+echo "패키지 설치 완료."
+echo
+
+
 
 # 2. 기존 디렉터리 정리 및 부모 디렉터리 생성
 echo ">>> [단계 2/7] 배포 디렉터리 준비"
@@ -60,6 +69,9 @@ mkdir -p "$APP_BASE_DIR"
 rm -rf "$APP_TARGET_DIR"
 echo "타겟 디렉터리 준비 완료: $APP_BASE_DIR"
 echo
+
+
+
 
 # 3. 소스 디렉터리를 타겟 위치로 복사 (디렉터리 구조 유지)
 echo ">>> [단계 3/7] 애플리케이션 파일 복사"
