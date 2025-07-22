@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCP 설치 준비 도우미</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>OCP 설치 준비 도우미</h1>
+
+    <!-- Section 1: OCP Installer 준비 -->
+    <div class="section-container">
+        <h2>&lt;&lt; Section 1 : OCP installer 준비 &gt;&gt;</h2>
+        
+        <!-- Section 1-1 -->
+        <div class="subsection">
+            <h3>1-1 : OCP version 선택</h3>
+            <label for="ocp_version_select">설치 OCP 버전 선택:</label>
+            <select id="ocp_version_select">
+                <option value="">버전 목록을 불러오는 중...</option>
+            </select>
+            <button id="btn_fetch_versions">버전 목록 새로고침</button>
+        </div>
+
+        <!-- Section 1-2 -->
+        <div class="subsection">
+            <h3>1-2 : 설치 프로그램 다운로드 및 압축풀기</h3>
+            <div class="action-item">
+                <button data-command-key="download_installer_client">Installer & Client 다운로드</button>
+                <pre class="output-box" id="output_download_installer_client"></pre>
+            </div>
+            <div class="action-item">
+                <button data-command-key="unpack_installer_client">Installer & Client 압축풀기</button>
+                <pre class="output-box" id="output_unpack_installer_client"></pre>
+            </div>
+            <div class="action-item">
+                <button data-command-key="oc_version">`oc version` 수행</button>
+                <pre class="output-box" id="output_oc_version"></pre>
+            </div>
+            <div class="action-item">
+                <button data-command-key="openshift_install_version">`openshift-install version` 수행</button>
+                <pre class="output-box" id="output_openshift_install_version"></pre>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Section 2: OCP Mirror 준비 -->
+    <div class="section-container">
+        <h2>&lt;&lt; Section 2 : OCP mirror 준비 &gt;&gt;</h2>
+        <div class="action-grid">
+            <div class="action-item">
+                <button data-command-key="download_oc_mirror">oc mirror 다운로드</button>
+                <pre class="output-box" id="output_download_oc_mirror"></pre>
+            </div>
+            <div class="action-item">
+                <button data-command-key="unpack_oc_mirror">oc mirror 압축풀기</button>
+                <pre class="output-box" id="output_unpack_oc_mirror"></pre>
+            </div>
+            <div class="action-item">
+                <button data-command-key="download_helm">helm 다운로드</button>
+                <pre class="output-box" id="output_download_helm"></pre>
+            </div>
+            <div class="action-item">
+                <button data-command-key="unpack_helm">helm 압축풀기</button>
+                <pre class="output-box" id="output_unpack_helm"></pre>
+            </div>
+            <div class="action-item">
+                <button data-command-key="download_tekton">Tekton(tkn) 다운로드</button>
+                <pre class="output-box" id="output_download_tekton"></pre>
+            </div>
+            <div class="action-item">
+                <button data-command-key="unpack_tekton">Tekton(tkn) 압축풀기</button>
+                <pre class="output-box" id="output_unpack_tekton"></pre>
+            </div>
+            <div class="action-item">
+                <button data-command-key="download_butane">Butane 다운로드</button>
+                <pre class="output-box" id="output_download_butane"></pre>
+            </div>
+            <div class="action-item">
+                <button data-command-key="install_butane">Butane 설치</button>
+                <pre class="output-box" id="output_install_butane"></pre>
+            </div>
+            <div class="action-item">
+                <button data-command-key="download_mirror_registry">mirror-registry 다운로드</button>
+                <pre class="output-box" id="output_download_mirror_registry"></pre>
+            </div>
+            <div class="action-item">
+                <button data-command-key="unpack_mirror_registry">mirror-registry 압축풀기</button>
+                <pre class="output-box" id="output_unpack_mirror_registry"></pre>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Section 3: Mirror Image 준비 -->
+    <div class="section-container">
+        <h2>&lt;&lt; Section 3 : Mirror Image 준비 &gt;&gt;</h2>
+        <div class="subsection">
+            <label for="registry_url">Registry 주소:</label>
+            <input type="text" id="registry_url" placeholder="예: my-registry.example.com:5000" style="width: 300px;"><br>
+            <small>ImageSetConfiguration의 `imageURL`에 사용됩니다.</small>
+        </div>
+
+        <div class="subsection operator-section">
+            <h4>Operator 선택</h4>
+            <div class="operator-catalog">
+                <input type="checkbox" id="chk_redhat" data-catalog="redhat-operator-index">
+                <label for="chk_redhat">RedHat-Operator</label>
+                <button class="btn-list-operators" data-catalog="redhat-operator-index">리스트 불러오기</button>
+                <div class="operator-list" id="list_redhat-operator-index"></div>
+            </div>
+            <div class="operator-catalog">
+                <input type="checkbox" id="chk_certified" data-catalog="certified-operator-index">
+                <label for="chk_certified">Certified-Operator</label>
+                <button class="btn-list-operators" data-catalog="certified-operator-index">리스트 불러오기</button>
+                <div class="operator-list" id="list_certified-operator-index"></div>
+            </div>
+            <div class="operator-catalog">
+                <input type="checkbox" id="chk_community" data-catalog="community-operator-index">
+                <label for="chk_community">Community-Operator</label>
+                <button class="btn-list-operators" data-catalog="community-operator-index">리스트 불러오기</button>
+                <div class="operator-list" id="list_community-operator-index"></div>
+            </div>
+            <div class="operator-catalog">
+                <input type="checkbox" id="chk_marketplace" data-catalog="redhat-marketplace-index">
+                <label for="chk_marketplace">RedHat-Marketplace-Operator</label>
+                <button class="btn-list-operators" data-catalog="redhat-marketplace-index">리스트 불러오기</button>
+                <div class="operator-list" id="list_redhat-marketplace-index"></div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <button id="btn_generate_imageset">ImageSetConfiguration 생성</button>
+            <pre class="output-box" id="output_generate_imageset"></pre>
+        </div>
+        <div class="subsection">
+            <button id="btn_run_mirror">Mirror Images 실행</button>
+            <pre class="output-box" id="output_run_mirror"></pre>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
