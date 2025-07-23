@@ -1,0 +1,133 @@
+```jinja2
+{# templates/haproxy.cfg.j2 #}
+#---------------------------------------------------------------------
+# Global settings
+#---------------------------------------------------------------------
+global
+    log         127.0.0.1 local2
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    maxconn     4000
+    user        haproxy
+    group       haproxy
+    daemon
+    stats socket /var/lib/haproxy/stats
+
+#---------------------------------------------------------------------
+# common defaults that all the 'listen' and 'backend' sections will
+# use if not designated in their block
+#---------------------------------------------------------------------
+defaults
+    mode                    http
+    log                     global
+    option                  httplog
+    option                  dontlognull
+    option http-server-close
+    option forwardfor       except 127.0.0.0/8
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 3000
+
+#---------------------------------------------------------------------
+# main frontend which proxys to the backends
+#---------------------------------------------------------------------
+#frontend main
+#    bind *:5000
+#    acl url_static       path_beg       -i /static /images /javascript /stylesheets
+#    acl url_backend      path_beg       -i /api
+#    use_backend static          if url_static
+#    default_backend             app
+
+#---------------------------------------------------------------------
+# static backend for serving up images, stylesheets and such
+#---------------------------------------------------------------------
+#backend static
+#    balance     roundrobin
+#    server      static 127.0.0.1:4331 check
+
+#---------------------------------------------------------------------
+# round robin balancing between the various backends
+#---------------------------------------------------------------------
+#backend app
+#    balance     roundrobin
+#    server  app1 127.0.0.1:5001 check
+#    server  app2 127.0.0.1:5002 check
+#    server  app3 127.0.0.1:5003 check
+#    server  app4 127.0.0.1:5004 check
+
+# --- OCP Settings ---
+listen stats
+    bind :9000
+    mode http
+    stats enable
+    stats uri /
+    monitor-uri /test
+
+frontend openshift-api-server
+    bind *:6443
+    default_backend openshift-api-server
+    mode tcp
+    option tcplog
+
+backend openshift-api-server
+    balance source
+    mode tcp
+    server master0 {{ data.nodeip_master0 }}:6443 check
+    server master1 {{ data.nodeip_master1 }}:6443 check
+    server master2 {{ data.nodeip_master2 }}:6443 check
+    
+frontend machine-config-server
+    bind *:22623
+    default_backend machine-config-server
+    mode tcp
+    option tcplog
+
+backend machine-config-server
+    balance source
+    mode tcp
+    server {{ data.hostname_master0 }} {{ data.nodeip_master0 }}:22623 check
+    server {{ data.hostname_master1 }} {{ data.nodeip_master1 }}:22623 check
+    server {{ data.hostname_master2 }} {{ data.nodeip_master2 }}:22623 check
+
+frontend ingress-http
+    bind *:80
+    default_backend ingress-http
+    mode tcp
+    option tcplog
+
+backend ingress-http
+    balance source
+    mode tcp
+    {% if data.nodeip_worker0 %}server {{ data.hostname_worker0 }} {{ data.nodeip_worker0 }}:80 check{% endif %}
+    {% if data.nodeip_worker1 %}server {{ data.hostname_worker1 }} {{ data.nodeip_worker1 }}:80 check{% endif %}
+    {% if data.nodeip_worker2 %}server {{ data.hostname_worker2 }} {{ data.nodeip_worker2 }}:80 check{% endif %}
+    {% if data.nodeip_worker3 %}server {{ data.hostname_worker3 }} {{ data.nodeip_worker3 }}:80 check{% endif %}
+    {% if data.nodeip_worker4 %}server {{ data.hostname_worker4 }} {{ data.nodeip_worker4 }}:80 check{% endif %}
+    {% if data.nodeip_infra0 %}server {{ data.hostname_infra0 }} {{ data.nodeip_infra0 }}:80 check{% endif %}
+    {% if data.nodeip_infra1 %}server {{ data.hostname_infra1 }} {{ data.nodeip_infra1 }}:80 check{% endif %}
+    {% if data.nodeip_infra2 %}server {{ data.hostname_infra2 }} {{ data.nodeip_infra2 }}:80 check{% endif %}
+
+frontend ingress-https
+    bind *:443
+    default_backend ingress-https
+    mode tcp
+    option tcplog
+
+backend ingress-https
+    balance source
+    mode tcp
+    {% if data.nodeip_worker0 %}server {{ data.hostname_worker0 }} {{ data.nodeip_worker0 }}:443 check{% endif %}
+    {% if data.nodeip_worker1 %}server {{ data.hostname_worker1 }} {{ data.nodeip_worker1 }}:443 check{% endif %}
+    {% if data.nodeip_worker2 %}server {{ data.hostname_worker2 }} {{ data.nodeip_worker2 }}:443 check{% endif %}
+    {% if data.nodeip_worker3 %}server {{ data.hostname_worker3 }} {{ data.nodeip_worker3 }}:443 check{% endif %}
+    {% if data.nodeip_worker4 %}server {{ data.hostname_worker4 }} {{ data.nodeip_worker4 }}:443 check{% endif %}
+    {% if data.nodeip_infra0 %}server {{ data.hostname_infra0 }} {{ data.nodeip_infra0 }}:443 check{% endif %}
+    {% if data.nodeip_infra1 %}server {{ data.hostname_infra1 }} {{ data.nodeip_infra1 }}:443 check{% endif %}
+    {% if data.nodeip_infra2 %}server {{ data.hostname_infra2 }} {{ data.nodeip_infra2 }}:443 check{% endif %}
