@@ -225,4 +225,4 @@ def run_mirror():
 
 # --- 애플리케이션 실행 ---
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5023)
+    app.run(debug=True, host='0.0.0.0', port=5022)
