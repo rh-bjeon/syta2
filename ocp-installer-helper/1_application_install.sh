@@ -19,7 +19,7 @@
 APP_BASE_DIR="/var/www/html"
 
 # 애플리케이션이 사용할 포트
-APP_PORT=5024
+APP_PORT=5023
 
 # systemd 서비스 이름
 SERVICE_NAME="ocp-installer"
