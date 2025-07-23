@@ -113,7 +113,7 @@ After=network.target
 User=$APP_USER
 Group=$APP_GROUP
 WorkingDirectory=$APP_TARGET_DIR
-ExecStart=$(command -v gunicorn) --workers 4 --bind 0.0.0.0:${APP_PORT} --timeout 300 app:app
+ExecStart=$(command -v gunicorn) --workers 4 --bind 0.0.0.0:${APP_PORT} --timeout 900 app:app
 Restart=always
 
 [Install]
