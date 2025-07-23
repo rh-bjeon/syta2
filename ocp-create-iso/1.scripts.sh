@@ -42,7 +42,7 @@ echo
 
 # 1. 필수 시스템 패키지 설치
 echo ">>> [단계 1/8] 필수 시스템 패키지 설치"
-#dnf install -y python3 python3-pip git gcc python3-devel rsync policycoreutils-python-utils bind-utils
+dnf install -y python3 python3-pip git gcc python3-devel rsync policycoreutils-python-utils bind-utils
 pip3 install gunicorn
 echo "패키지 설치 완료."
 echo
