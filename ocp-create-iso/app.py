@@ -94,13 +94,13 @@ def configure_bastion():
     elif config_type == 'ip':
         ip = data['nodeip_bastion']
         prefix = data['prefix_master0'] # 예시로 master0의 prefix 사용
-        gateway = data.get('gw_bastion', '') # gw_bastion 키가 없을 경우 대비
+        gateway = data['gw_master0'] # gw_bastion 키가 없을 경우 대비
         dns = data['nodeip_bastion']
         search_domain = f"{data['metadata_name']}.{data['base_domain']}"
         # nmcli를 사용하여 네트워크 설정 변경 (더 안정적)
-        # 실제 인터페이스 이름(예: eth0)을 알아야 함. 여기서는 'eth0'으로 가정.
+        # 실제 인터페이스 이름(예: eth0)을 알아야 함. 여기서는 'enp1s0'으로 가정.
         # 이 부분은 환경에 맞게 수정이 필요할 수 있습니다.
-        interface_name = "eth0" 
+        interface_name = "enf1s0" 
         command = (
             f"sudo nmcli connection modify {interface_name} "
             f"ipv4.method manual ipv4.addresses {ip}/{prefix} "
