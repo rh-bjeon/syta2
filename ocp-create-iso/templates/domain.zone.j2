@@ -1,0 +1,36 @@
+```jinja2
+{# templates/domain.zone.j2 #}
+$TTL 86400
+@       IN SOA  ns.{{ data.base_domain }}. root.{{ data.base_domain }}. (
+                                        2024010101      ; serial
+                                        1D              ; refresh
+                                        1H              ; retry
+                                        1W              ; expire
+                                        3H )            ; minimum
+        IN      NS      ns.{{ data.base_domain }}.
+        IN      A       {{ data.nodeip_bastion }}
+www     IN      A       {{ data.nodeip_bastion }}
+ns      IN      A       {{ data.nodeip_bastion }}
+mail    IN      A       {{ data.nodeip_bastion }}
+ntp     IN      A       {{ data.nodeip_bastion }}
+{{ data.hostname_bastion }}.{{ data.metadata_name }}    IN      A       {{ data.nodeip_bastion }}
+{{ data.hostname_master0 }}.{{ data.metadata_name }}    IN      A       {{ data.nodeip_master0 }}
+{{ data.hostname_master1 }}.{{ data.metadata_name }}    IN      A       {{ data.nodeip_master1 }}
+{{ data.hostname_master2 }}.{{ data.metadata_name }}    IN      A       {{ data.nodeip_master2 }}
+etcd-0.{{ data.metadata_name }}         IN      A       {{ data.nodeip_master0 }}
+etcd-1.{{ data.metadata_name }}         IN      A       {{ data.nodeip_master1 }}
+etcd-2.{{ data.metadata_name }}         IN      A       {{ data.nodeip_master2 }}
+{% if data.nodeip_infra0 %}{{ data.hostname_infra0 }}.{{ data.metadata_name }}    IN      A       {{ data.nodeip_infra0 }}{% endif %}
+{% if data.nodeip_infra1 %}{{ data.hostname_infra1 }}.{{ data.metadata_name }}    IN      A       {{ data.nodeip_infra1 }}{% endif %}
+{% if data.nodeip_infra2 %}{{ data.hostname_infra2 }}.{{ data.metadata_name }}    IN      A       {{ data.nodeip_infra2 }}{% endif %}
+{% if data.nodeip_worker0 %}{{ data.hostname_worker0 }}.{{ data.metadata_name }}   IN      A       {{ data.nodeip_worker0 }}{% endif %}
+{% if data.nodeip_worker1 %}{{ data.hostname_worker1 }}.{{ data.metadata_name }}   IN      A       {{ data.nodeip_worker1 }}{% endif %}
+{% if data.nodeip_worker2 %}{{ data.hostname_worker2 }}.{{ data.metadata_name }}   IN      A       {{ data.nodeip_worker2 }}{% endif %}
+{% if data.nodeip_worker3 %}{{ data.hostname_worker3 }}.{{ data.metadata_name }}   IN      A       {{ data.nodeip_worker3 }}{% endif %}
+{% if data.nodeip_worker4 %}{{ data.hostname_worker4 }}.{{ data.metadata_name }}   IN      A       {{ data.nodeip_worker4 }}{% endif %}
+api.{{ data.metadata_name }}            IN      A       {{ data.nodeip_bastion }}
+api-int.{{ data.metadata_name }}        IN      A       {{ data.nodeip_bastion }}
+*.apps.{{ data.metadata_name }}         IN      A       {{ data.nodeip_bastion }}
+_etcd-server-ssl._tcp.{{ data.metadata_name }}   86400 IN      SRV 0   10      2380 etcd-0.{{ data.metadata_name }}.{{ data.base_domain }}.
+_etcd-server-ssl._tcp.{{ data.metadata_name }}   86400 IN      SRV 0   10      2380 etcd-1.{{ data.metadata_name }}.{{ data.base_domain }}.
+_etcd-server-ssl._tcp.{{ data.metadata_name }}   86400 IN      SRV 0   10      2380 etcd-2.{{ data.metadata_name }}.{{ data.base_domain }}.
