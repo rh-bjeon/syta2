@@ -1,0 +1,33 @@
+```jinja2
+{# templates/domain.rev.j2 #}
+{%- set rev_bastion = data.nodeip_bastion.split('.')[-1] %}
+{%- set rev_master0 = data.nodeip_master0.split('.')[-1] %}
+{%- set rev_master1 = data.nodeip_master1.split('.')[-1] %}
+{%- set rev_master2 = data.nodeip_master2.split('.')[-1] %}
+$TTL 10M
+@       IN SOA  @ ns.{{ data.base_domain }}. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+        IN      NS      ns.{{ data.base_domain }}.
+{{ rev_bastion }}       IN      PTR     ns.{{ data.base_domain }}.
+{{ rev_bastion }}       IN      PTR     mail.{{ data.base_domain }}.
+{{ rev_bastion }}       IN      PTR     {{ data.hostname_bastion }}.{{ data.metadata_name }}.{{ data.base_domain }}.
+{{ rev_master0 }}       IN      PTR     {{ data.hostname_master0 }}.{{ data.metadata_name }}.{{ data.base_domain }}.
+{{ rev_master1 }}       IN      PTR     {{ data.hostname_master1 }}.{{ data.metadata_name }}.{{ data.base_domain }}.
+{{ rev_master2 }}       IN      PTR     {{ data.hostname_master2 }}.{{ data.metadata_name }}.{{ data.base_domain }}.
+{% if data.nodeip_infra0 %}{{ data.nodeip_infra0.split('.')[-1] }}       IN      PTR     {{ data.hostname_infra0 }}.{{ data.metadata_name }}.{{ data.base_domain }}.{% endif %}
+{% if data.nodeip_infra1 %}{{ data.nodeip_infra1.split('.')[-1] }}       IN      PTR     {{ data.hostname_infra1 }}.{{ data.metadata_name }}.{{ data.base_domain }}.{% endif %}
+{% if data.nodeip_infra2 %}{{ data.nodeip_infra2.split('.')[-1] }}       IN      PTR     {{ data.hostname_infra2 }}.{{ data.metadata_name }}.{{ data.base_domain }}.{% endif %}
+{% if data.nodeip_worker0 %}{{ data.nodeip_worker0.split('.')[-1] }}      IN      PTR     {{ data.hostname_worker0 }}.{{ data.metadata_name }}.{{ data.base_domain }}.{% endif %}
+{% if data.nodeip_worker1 %}{{ data.nodeip_worker1.split('.')[-1] }}      IN      PTR     {{ data.hostname_worker1 }}.{{ data.metadata_name }}.{{ data.base_domain }}.{% endif %}
+{% if data.nodeip_worker2 %}{{ data.nodeip_worker2.split('.')[-1] }}      IN      PTR     {{ data.hostname_worker2 }}.{{ data.metadata_name }}.{{ data.base_domain }}.{% endif %}
+{% if data.nodeip_worker3 %}{{ data.nodeip_worker3.split('.')[-1] }}      IN      PTR     {{ data.hostname_worker3 }}.{{ data.metadata_name }}.{{ data.base_domain }}.{% endif %}
+{% if data.nodeip_worker4 %}{{ data.nodeip_worker4.split('.')[-1] }}      IN      PTR     {{ data.hostname_worker4 }}.{{ data.metadata_name }}.{{ data.base_domain }}.{% endif %}
+{{ rev_master0 }}       IN      PTR     etcd-0.{{ data.metadata_name }}.{{ data.base_domain }}.
+{{ rev_master1 }}       IN      PTR     etcd-1.{{ data.metadata_name }}.{{ data.base_domain }}.
+{{ rev_master2 }}       IN      PTR     etcd-2.{{ data.metadata_name }}.{{ data.base_domain }}.
+{{ rev_bastion }}       IN      PTR     api.{{ data.metadata_name }}.{{ data.base_domain }}.
+{{ rev_bastion }}       IN      PTR     api-int.{{ data.metadata_name }}.{{ data.base_domain }}.
