@@ -1,0 +1,13 @@
+```jinja2
+{# templates/named.rfc1912.zones.j2 #}
+zone "{{ base_domain }}" IN {
+    type master;
+    file "{{ base_domain }}.zone";
+    allow-update { none; };
+};
+
+zone "{{ rev_ip }}.in-addr.arpa" IN {
+    type master;
+    file "{{ base_domain }}.rev";
+    allow-update { none; };
+};
