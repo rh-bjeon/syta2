@@ -119,10 +119,10 @@ echo "방화벽에서 ${APP_PORT}/tcp 포트를 영구적으로 허용합니다.
 
 echo "SELinux 컨텍스트를 설정하고 네트워크 연결을 허용합니다."
 # chcon: 웹 서버가 애플리케이션 파일에 접근할 수 있도록 컨텍스트 설정
-chcon -R -t httpd_sys_content_t "$APP_TARGET_DIR"
+#chcon -R -t httpd_sys_content_t "$APP_TARGET_DIR"
 # setsebool: httpd(apache)가 네트워크에 연결할 수 있도록 허용
-setsebool -P httpd_can_network_connect 1
-echo "방화벽 및 SELinux 구성 완료."
+#setsebool -P httpd_can_network_connect 1
+#echo "방화벽 및 SELinux 구성 완료."
 echo
 
 # 8. 서비스 활성화 및 시작
@@ -143,4 +143,3 @@ echo
 echo "웹 브라우저에서 아래 주소로 접속하세요:"
 echo "http://<서버_IP_주소>:${APP_PORT}"
 echo "=================================================="
-
