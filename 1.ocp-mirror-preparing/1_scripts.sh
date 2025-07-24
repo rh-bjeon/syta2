@@ -51,6 +51,9 @@ echo ">>> 자동 감지된 소스 경로: $SOURCE_DIR"
 echo ">>> 최종 배포될 경로: $APP_TARGET_DIR"
 echo
 
+sudo mkdir /ocp_install/
+
+
 # 2. 필수 시스템 패키지 설치
 echo ">>> [단계 1/7] 필수 시스템 패키지 설치"
 #dnf install -y python3 python3-pip git gcc python3-devel rsync
