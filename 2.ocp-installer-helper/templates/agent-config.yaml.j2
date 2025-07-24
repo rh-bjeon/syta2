@@ -39,7 +39,6 @@ hosts:
           {% if iface.type == 'bond' %}
           link-aggregation:
             mode: {{ iface['link-aggregation'].mode }}
-            {# [수정 2] miimon 형식을 중첩 구조로 렌더링 #}
             options:
               miimon: "{{ iface['link-aggregation'].options.miimon }}"
             port:
