@@ -1,5 +1,5 @@
-```jinja2
-{# templates/haproxy.cfg.j2 #}
+
+<!-- templates/haproxy.cfg.j2 -->
 #---------------------------------------------------------------------
 # Global settings
 #---------------------------------------------------------------------
@@ -35,26 +35,6 @@ defaults
     timeout check           10s
     maxconn                 3000
 
-#---------------------------------------------------------------------
-# main frontend which proxys to the backends
-#---------------------------------------------------------------------
-#frontend main
-#    bind *:5000
-#    acl url_static       path_beg       -i /static /images /javascript /stylesheets
-#    acl url_backend      path_beg       -i /api
-#    use_backend static          if url_static
-#    default_backend             app
-
-#---------------------------------------------------------------------
-# static backend for serving up images, stylesheets and such
-#---------------------------------------------------------------------
-#backend static
-#    balance     roundrobin
-#    server      static 127.0.0.1:4331 check
-
-#---------------------------------------------------------------------
-# round robin balancing between the various backends
-#---------------------------------------------------------------------
 #backend app
 #    balance     roundrobin
 #    server  app1 127.0.0.1:5001 check
@@ -68,7 +48,7 @@ listen stats
     mode http
     stats enable
     stats uri /
-    monitor-uri /test
+    monitor-uri /aiden-test
 
 frontend openshift-api-server
     bind *:6443
