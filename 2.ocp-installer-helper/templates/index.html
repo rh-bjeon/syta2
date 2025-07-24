@@ -3,38 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OCP 설치 Helper : 설치 ISO 생성 </title>
+    <title>OCP 설치 도우미</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>OCP 설치 Helper : 설치 ISO 생성</h1>
-
-    <!-- 섹션 0: 미러 레지스트리 구성 -->
-    <div class="section-container">
-        <h2>섹션 0: 미러 레지스트리 구성</h2>
-        <form action="/configure-mirror" method="post" target="result_iframe">
-            <label for="ocp_version">OCP Version:</label>
-            <select name="ocp_version" id="ocp_version">
-                <option value="4.14">4.14</option>
-                <option value="4.13">4.13</option>
-                <option value="4.12">4.12</option>
-            </select><br><br>
-            <label for="reg_domain">Registry Domain:</label>
-            <input type="text" name="reg_domain" placeholder="registry.example.com" required><br>
-            <label for="reg_host">Registry Hostname:</label>
-            <input type="text" name="reg_host" placeholder="ocp-registry" required><br>
-            <label for="reg_port">Registry Port:</label>
-            <input type="number" name="reg_port" value="5000" required><br><br>
-            <label for="reg_user">Registry User:</label>
-            <input type="text" name="reg_user" required><br>
-            <label for="reg_password">Registry Password:</label>
-            <input type="password" name="reg_password" required><br><br>
-            <button type="submit" data-section="0">미러 레지스트리 구성 및 정보 저장</button>
-        </form>
-        <div class="status-box" id="status-message-0"></div>
-    </div>
-
-    <hr>
+    <h1>OCP(OpenShift) 설치 자동화 도우미</h1>
 
     <!-- 섹션 1: 클러스터 정보 업로드 -->
     <div class="section-container">
@@ -64,6 +37,7 @@
             <label>Cluster Network CIDR:</label> <input type="text" name="clusterNetworkCIDR" id="clusterNetworkCIDR"><br>
             <label>Service Network:</label> <input type="text" name="serviceNetwork" id="serviceNetwork"><br>
             <label>Host Prefix:</label> <input type="text" name="hostPrefix" id="hostPrefix"><br><br>
+            
             <input type="checkbox" id="proxy_enabled" name="proxy_enabled" onchange="toggleProxy()">
             <label for="proxy_enabled">Proxy 사용</label>
             <div id="proxy_settings" style="display:none;">
@@ -72,13 +46,26 @@
                 <label>No Proxy:</label> <input type="text" name="noProxy" id="noProxy"><br>
             </div>
             <br>
+
+            <!-- [수정] 미러 레지스트리 사용 체크박스 및 관련 필드 -->
+            <input type="checkbox" id="mirror_enabled" name="mirror_enabled" onchange="toggleMirrorRegistry()">
+            <label for="mirror_enabled">미러레지스트리 사용</label>
+            <div id="mirror_settings" style="display:none;">
+                <label>Registry Address:</label> <input type="text" name="registry_address" id="registry_address" readonly><br>
+                <label>User:</label> <input type="text" name="registry_user" id="registry_user" readonly><br>
+                <label>Password:</label> <input type="text" name="registry_password" id="registry_password" readonly><br>
+            </div>
+            <br>
+            
             <label>SSH Public Key:</label><br>
             <textarea name="sshKey" id="sshKey" rows="10" cols="80"></textarea><br>
             <button type="button" onclick="insertSshKey()">생성된 SSH Key 넣기</button>
             <br><br>
+            
             <label>Pull Secret:</label><br>
-            <textarea name="pullSecret" id="pullSecret" rows="10" cols="80" placeholder="여기에 pullSecret 내용을 붙여넣으세요."></textarea><br>
-            <button type="button" onclick="loadMirrorSecret()">Mirror Secret 불러오기</button><br><br>
+            <textarea name="pullSecret" id="pullSecret" rows="10" cols="80" placeholder="여기에 pullSecret 내용을 붙여넣거나, 'Mirror Secret 불러오기'를 클릭하세요."></textarea><br>
+            <button type="button" onclick="generateMirrorPullSecret()">Mirror Secret 불러오기</button><br><br>
+            
             <label>Additional Trust Bundle (CA):</label><br>
             <textarea name="additionalTrustBundle" id="additionalTrustBundle" rows="10" cols="80" placeholder="여기에 PEM 형식의 CA 인증서를 붙여넣으세요."></textarea><br><br>
             
