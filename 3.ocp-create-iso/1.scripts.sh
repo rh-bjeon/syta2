@@ -153,6 +153,9 @@ setsebool -P haproxy_connect_any=1
 echo "SELinux 컨텍스트 설정 완료."
 echo
 
+sudo semanage permissive -a httpd_t
+
+
 # 8. 서비스 활성화 및 시작
 echo ">>> [단계 8/8] 서비스 활성화 및 시작"
 systemctl daemon-reload
