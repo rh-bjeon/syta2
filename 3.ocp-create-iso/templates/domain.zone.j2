@@ -1,6 +1,4 @@
 
-
-<!-- templates/domain.zone.j2 -->
 $TTL 86400
 @       IN SOA  ns.{{ data.base_domain }}. root.{{ data.base_domain }}. (
                                         2024010101      ; serial
@@ -35,4 +33,3 @@ api-int.{{ data.metadata_name }}        IN      A       {{ data.nodeip_bastion }
 _etcd-server-ssl._tcp.{{ data.metadata_name }}   86400 IN      SRV 0   10      2380 etcd-0.{{ data.metadata_name }}.{{ data.base_domain }}.
 _etcd-server-ssl._tcp.{{ data.metadata_name }}   86400 IN      SRV 0   10      2380 etcd-1.{{ data.metadata_name }}.{{ data.base_domain }}.
 _etcd-server-ssl._tcp.{{ data.metadata_name }}   86400 IN      SRV 0   10      2380 etcd-2.{{ data.metadata_name }}.{{ data.base_domain }}.
-
