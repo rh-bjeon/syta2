@@ -11,7 +11,7 @@ let selectedHostnames = new Set();
 let roleCounts = { master: 0, infra: 0, worker: 0 };
 let nodeState = {};
 let nodeCounter = 0;
-let lastSubmittedSection = null; // 마지막으로 제출된 폼의 섹션 번호를 추적
+let lastSubmittedSection = null;
 
 // ==================================================================
 // Initial Load & Data Fetch
@@ -40,20 +40,16 @@ async function loadClusterData() {
 function setupIframeListener() {
     const iframe = document.getElementById('result_iframe');
     iframe.onload = () => {
-        // iframe 로드 완료 후 약간의 지연을 주어 내용이 완전히 렌더링되도록 함
         setTimeout(() => {
             try {
                 const iframeBody = iframe.contentWindow.document.body;
                 const message = iframeBody.textContent || iframeBody.innerText;
-                
-                // 올바른 섹션에 상태 메시지 표시
                 const statusDiv = document.getElementById(`status-message-${lastSubmittedSection}`) || document.getElementById('status-message-fallback');
                 statusDiv.textContent = message;
                 
                 if (message.includes('성공적으로 저장') || message.includes('생성되었습니다')) {
                     statusDiv.style.color = 'green';
                     if (message.includes('클러스터 정보가 성공적으로 저장')) {
-                        console.log('파일 업로드 성공. 클러스터 데이터를 다시 로드합니다.');
                         loadClusterData();
                     }
                 } else {
@@ -67,18 +63,15 @@ function setupIframeListener() {
     };
 }
 
-// 제출 버튼 클릭 시 어떤 섹션인지 추적하는 리스너
 function setupSubmitButtonListener() {
     document.querySelectorAll('button[type="submit"]').forEach(button => {
         button.addEventListener('click', function() {
             lastSubmittedSection = this.dataset.section;
-            // 메시지 초기화
             const statusDiv = document.getElementById(`status-message-${lastSubmittedSection}`);
             if(statusDiv) statusDiv.textContent = '처리 중...';
         });
     });
 }
-
 
 // ==================================================================
 // Section 2: install-config.yaml Functions
@@ -100,6 +93,9 @@ function loadClusterInfoForInstallConfig() {
         document.getElementById('httpsProxy').value = clusterData.httpsProxy || '';
         document.getElementById('noProxy').value = clusterData.noProxy || '';
     }
+    if (document.getElementById('mirror_enabled').checked) {
+        loadMirrorRegistryInfo();
+    }
 }
 
 function toggleProxy() {
@@ -109,6 +105,50 @@ function toggleProxy() {
     if (isChecked) {
         loadClusterInfoForInstallConfig();
     }
+}
+
+function toggleMirrorRegistry() {
+    const mirrorSettings = document.getElementById('mirror_settings');
+    const isChecked = document.getElementById('mirror_enabled').checked;
+    mirrorSettings.style.display = isChecked ? 'block' : 'none';
+    if (isChecked) {
+        loadMirrorRegistryInfo();
+    }
+}
+
+function loadMirrorRegistryInfo() {
+    if (!clusterData || Object.keys(clusterData).length === 0) {
+        alert("먼저 '섹션 1'에서 클러스터 정보 파일(CSV)을 업로드하세요.");
+        return;
+    }
+    document.getElementById('registry_address').value = clusterData.local_registry || '';
+    document.getElementById('registry_user').value = clusterData.local_registry_user || '';
+    document.getElementById('registry_password').value = clusterData.local_registry_password || '';
+}
+
+function generateMirrorPullSecret() {
+    const regAddr = document.getElementById('registry_address').value;
+    const regUser = document.getElementById('registry_user').value;
+    const regPass = document.getElementById('registry_password').value;
+
+    if (!document.getElementById('mirror_enabled').checked) {
+        alert("'미러레지스트리 사용'을 먼저 체크해주세요.");
+        return;
+    }
+    if (!regAddr || !regUser || !regPass) {
+        alert("레지스트리 정보가 없습니다. CSV에 local_registry, local_registry_user, local_registry_password 키가 있는지 확인하세요.");
+        return;
+    }
+
+    const authString = btoa(`${regUser}:${regPass}`);
+    const pullSecretObject = {
+        "auths": {
+            [regAddr]: {
+                "auth": authString
+            }
+        }
+    };
+    document.getElementById('pullSecret').value = JSON.stringify(pullSecretObject, null, 4);
 }
 
 async function generateSshKey() {
@@ -141,25 +181,6 @@ async function insertSshKey() {
     }
 }
 
-async function loadMirrorSecret() {
-    const response = await fetch('/api/load-mirror-secret');
-    const data = await response.json();
-    if (data.error) {
-        alert(data.error);
-        return;
-    }
-    const pullSecretValue = JSON.stringify({
-        "auths": {
-            [data.registry_url]: {
-                "auth": btoa(`${data.registry_user}:${data.registry_password}`),
-                "email": "you@example.com"
-            }
-        }
-    }, null, 4);
-    document.getElementById('pullSecret').value = pullSecretValue;
-}
-
-
 // ==================================================================
 // Section 3: agent-config.yaml Functions
 // ==================================================================
@@ -176,9 +197,7 @@ function loadClusterInfoForAgentConfig() {
 function addNodeSection() {
     const container = document.getElementById('nodes-container');
     const nodeIndex = nodeCounter++;
-    
     nodeState[nodeIndex] = { role: null, hostname: null, interfaceType: 'ethernet' };
-
     const nodeHtml = `
         <div class="node-section" id="node-${nodeIndex}">
             <h4>Node ${nodeIndex + 1} <button type="button" onclick="removeNodeSection(${nodeIndex})">X</button></h4>
@@ -198,7 +217,6 @@ function addNodeSection() {
                 <option value="ethernet" selected>Ethernet</option>
                 <option value="bond">Bond</option>
             </select><br><br>
-            
             <div class="interface-fields ethernet-fields" data-index="${nodeIndex}" style="display: block;">
                 <label>Interface Name:</label> <input type="text" class="node-field" data-field="interface" readonly><br>
                 <label>MAC Address:</label> <input type="text" class="node-field" data-field="mac" readonly><br>
@@ -222,7 +240,6 @@ function addNodeSection() {
                 <label>DNS Resolver:</label> <input type="text" class="node-field" data-field="dns" readonly><br>
                 <label>Gateway:</label> <input type="text" class="node-field" data-field="gw" readonly><br>
             </div>
-            
             <label>Root Device:</label> <input type="text" class="node-field" data-field="disk" readonly><br>
             <hr>
         </div>
@@ -369,25 +386,17 @@ document.getElementById('agent-config-form').addEventListener('submit', function
         
         const finalNodeData = {
             role: state.role,
-            // [수정 1] 호스트네임 생성 방식 변경
             hostname: `${state.hostname}.${clusterData.metadata_name}.${clusterData.base_domain}`,
             rootDeviceHints: { deviceName: getFieldValue('disk') },
             interfaces: [],
             networkConfig: { interfaces: [] }
         };
 
-        let gateway, nextHopInterface, ip_address, prefix_length, dns_resolver, mtu;
+        let gateway, nextHopInterface;
 
         if (interfaceType === 'ethernet') {
             const ifaceName = getFieldValue("interface");
             finalNodeData.interfaces.push({ name: ifaceName, macAddress: getFieldValue("mac") });
-            
-            mtu = getFieldValue('mtu');
-            ip_address = getFieldValue("nodeip");
-            prefix_length = getFieldValue("prefix");
-            dns_resolver = getFieldValue("dns");
-            gateway = getFieldValue("gw");
-            nextHopInterface = ifaceName;
             
             const networkInterface = {
                 name: ifaceName,
@@ -395,15 +404,19 @@ document.getElementById('agent-config-form').addEventListener('submit', function
                 state: 'up',
                 'mac-address': getFieldValue("mac"),
                 ipv4: {
-                    // [수정 3] boolean 값을 소문자 문자열로 변경
                     enabled: String(true).toLowerCase(),
-                    address: [{ ip: ip_address, 'prefix-length': parseInt(prefix_length, 10) }],
+                    address: [{ ip: getFieldValue("nodeip"), 'prefix-length': parseInt(getFieldValue("prefix"), 10) }],
                     dhcp: String(false).toLowerCase()
                 },
                 ipv6: { enabled: String(false).toLowerCase() }
             };
+            const mtu = getFieldValue('mtu');
             if (mtu) networkInterface.mtu = parseInt(mtu, 10);
             finalNodeData.networkConfig.interfaces.push(networkInterface);
+            
+            gateway = getFieldValue("gw");
+            nextHopInterface = ifaceName;
+            finalNodeData.networkConfig['dns-resolver'] = { config: { server: [getFieldValue("dns")] } };
 
         } else { // bond
             const bondName = getFieldValue("bond_Interface_name");
@@ -413,39 +426,34 @@ document.getElementById('agent-config-form').addEventListener('submit', function
             finalNodeData.interfaces.push({ name: port1Name, macAddress: getFieldValue("bond_mac1") });
             finalNodeData.interfaces.push({ name: port2Name, macAddress: getFieldValue("bond_mac2") });
             
-            mtu = getFieldValue("mtu");
-            ip_address = getFieldValue("nodeip");
-            prefix_length = getFieldValue("prefix");
-            dns_resolver = getFieldValue("dns");
-            gateway = getFieldValue("gw");
-            nextHopInterface = bondName;
-
             const networkInterface = {
                 name: bondName,
                 type: 'bond',
                 state: 'up',
                 'mac-address': getFieldValue("bond_mac1"),
                 ipv4: {
-                    // [수정 3] boolean 값을 소문자 문자열로 변경
                     enabled: String(true).toLowerCase(),
-                    address: [{ ip: ip_address, 'prefix-length': parseInt(prefix_length, 10) }],
+                    address: [{ ip: getFieldValue("nodeip"), 'prefix-length': parseInt(getFieldValue("prefix"), 10) }],
                     dhcp: String(false).toLowerCase()
                 },
                 ipv6: { enabled: String(false).toLowerCase() },
                 'link-aggregation': {
                     mode: getFieldValue("bond_link-aggregation_mode"),
-                    // [수정 2] miimon 형식을 중첩 객체로 변경
                     options: {
                         miimon: getFieldValue("bond_miimon")
                     },
                     port: [port1Name, port2Name]
                 }
             };
+            const mtu = getFieldValue("mtu");
             if (mtu) networkInterface.mtu = parseInt(mtu, 10);
             finalNodeData.networkConfig.interfaces.push(networkInterface);
+
+            gateway = getFieldValue("gw");
+            nextHopInterface = bondName;
+            finalNodeData.networkConfig['dns-resolver'] = { config: { server: [getFieldValue("dns")] } };
         }
 
-        finalNodeData.networkConfig['dns-resolver'] = { config: { server: [dns_resolver] } };
         if (gateway && nextHopInterface) {
             finalNodeData.networkConfig.routes = { config: [{
                 destination: '0.0.0.0/0',
