@@ -75,7 +75,6 @@ EOF'
 
 sudo semanage fcontext -a -t httpd_sys_rw_content_t "/ocp_install(/.*)?"
 sudo restorecon -Rv /ocp_install
-sudo systemctl restart ocp-mirror-preparing.service
 
 sudo chown apache:apache /usr/share/httpd
 
