@@ -117,6 +117,8 @@ echo "방화벽에서 ${APP_PORT}/tcp 포트를 영구적으로 허용합니다.
 #    firewall-cmd --reload
 #fi
 
+sudo semanage permissive -a httpd_t
+
 echo "SELinux 컨텍스트를 설정하고 네트워크 연결을 허용합니다."
 # chcon: 웹 서버가 애플리케이션 파일에 접근할 수 있도록 컨텍스트 설정
 #chcon -R -t httpd_sys_content_t "$APP_TARGET_DIR"
