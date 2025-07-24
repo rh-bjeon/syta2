@@ -108,9 +108,9 @@ def execute_command_route():
         'download_tekton': f"wget -P {OC_MIRROR_BASE_DIR}/tekton https://mirror.openshift.com/pub/openshift-v4/clients/pipeline/latest/tkn-linux-amd64.tar.gz",
         'unpack_tekton': f"sudo tar --overwrite -xzf {OC_MIRROR_BASE_DIR}/tekton/tkn-linux-amd64.tar.gz -C /usr/local/bin/",
         'download_butane': f"wget -P {OC_MIRROR_BASE_DIR}/butane https://mirror.openshift.com/pub/openshift-v4/clients/butane/latest/butane",
-        'install_butane': f"sudo chmod 755 {OC_MIRROR_BASE_DIR}/butane/butane && sudo mv {OC_MIRROR_BASE_DIR}/butane/butane /usr/local/bin/",
+        'install_butane': f"sudo chmod 755 {OC_MIRROR_BASE_DIR}/butane/butane && sudo cp {OC_MIRROR_BASE_DIR}/butane/butane /usr/local/bin/",
         'download_mirror_registry': f"wget -P {OC_MIRROR_BASE_DIR}/mirror-registry/ https://mirror.openshift.com/pub/cgw/mirror-registry/latest/mirror-registry-amd64.tar.gz",
-        'unpack_mirror_registry': f"tar --overwrite -xzf {OC_MIRROR_BASE_DIR}/mirror-registry/mirror-registry-amd64.tar.gz -C {OC_MIRROR_BASE_DIR}/mirror-registry/ && sudo mv {OC_MIRROR_BASE_DIR}/mirror-registry/* /usr/local/bin/",
+        'unpack_mirror_registry': f"tar --overwrite -xzf {OC_MIRROR_BASE_DIR}/mirror-registry/mirror-registry-amd64.tar.gz -C {OC_MIRROR_BASE_DIR}/mirror-registry/ && sudo cp {OC_MIRROR_BASE_DIR}/mirror-registry/* /usr/local/bin/",
     }
     command_to_run = commands.get(command_key)
     if not command_to_run:
