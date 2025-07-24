@@ -1,4 +1,3 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -73,9 +72,17 @@
             <button data-action-type="mirror_start">Mirror registry 서비스 시작</button>
             <pre class="output-box" id="output-mirror_start"></pre>
         </div>
+        <!-- [수정] auth 정보 지정 UI 변경 -->
+        <div class="action-item">
+            <button data-action-type="registry_auth">auth 정보 지정</button>
+            <button type="button" class="copy-btn" data-target="output-registry_auth" style="display: none;">복사하기</button>
+            <div class="output-box" id="output-registry_auth"></div>
+        </div>
+        <!-- [수정] 이미지 푸시 UI 변경 -->
         <div class="action-item">
             <button data-action-type="mirror_push">다운 받은 이미지를 Mirror registry로 Push</button>
-            <pre class="output-box" id="output-mirror_push"></pre>
+            <button type="button" class="copy-btn" data-target="output-mirror_push" style="display: none;">복사하기</button>
+            <div class="output-box" id="output-mirror_push"></div>
         </div>
     </div>
 
