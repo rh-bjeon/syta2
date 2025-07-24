@@ -29,28 +29,99 @@
         <p>이 섹션의 작업들은 서버의 중요 설정을 변경합니다. 순서대로 신중하게 실행하세요.</p>
         
         <div class="action-item">
-            <button data-config-type="hostname">Bastion Hostname 확정</button>
+            <button data-action-type="hostname">Bastion Hostname 확정</button>
             <pre class="output-box" id="output-hostname"></pre>
         </div>
         <div class="action-item">
-            <button data-config-type="ip">Bastion IP 변경</button>
+            <button data-action-type="ip">Bastion IP 변경</button>
             <pre class="output-box" id="output-ip"></pre>
         </div>
         <div class="action-item">
-            <button data-config-type="dns">DNS 설정 변경 및 적용</button>
+            <button data-action-type="dns">DNS 설정 변경 및 적용</button>
             <pre class="output-box" id="output-dns"></pre>
         </div>
         <div class="action-item">
-            <button data-config-type="chrony">Chrony 서비스 확정</button>
+            <button data-action-type="chrony">Chrony 서비스 확정</button>
             <pre class="output-box" id="output-chrony"></pre>
         </div>
         <div class="action-item">
-            <button data-config-type="haproxy">HAProxy 서비스 확정</button>
+            <button data-action-type="haproxy">HAProxy 서비스 확정</button>
             <pre class="output-box" id="output-haproxy"></pre>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- 섹션 3: Mirror registry 구성 -->
+    <div class="section-container">
+        <h2>섹션 3: Mirror registry 구성</h2>
+        <div class="action-item">
+            <button data-action-type="mirror_install">Mirror registry 구성</button>
+            <pre class="output-box" id="output-mirror_install"></pre>
+        </div>
+        <div class="action-item">
+            <button data-action-type="ca_trust">CA 신뢰 설정</button>
+            <pre class="output-box" id="output-ca_trust"></pre>
+        </div>
+        <div class="action-item">
+            <button data-action-type="get_ca_cert">CA 확인</button>
+            <textarea id="ca_cert_textbox" rows="8" cols="80" readonly></textarea>
+            <button id="btn_copy_ca">복사하기</button>
+            <pre class="output-box" id="output-get_ca_cert"></pre>
+        </div>
+        <div class="action-item">
+            <button data-action-type="mirror_start">Mirror registry 서비스 시작</button>
+            <pre class="output-box" id="output-mirror_start"></pre>
+        </div>
+        <div class="action-item">
+            <button data-action-type="mirror_push">다운 받은 이미지를 Mirror registry로 Push</button>
+            <pre class="output-box" id="output-mirror_push"></pre>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- 섹션 4: YAML 파일 준비 -->
+    <div class="section-container">
+        <h2>섹션 4: install-config.yaml / agent-config.yaml 파일 준비</h2>
+        <div class="warning-text">* 이 단계에서 install-config.yaml 과 agent-config.yaml 을 준비합니다.</div>
+        <button onclick="window.open('http://{{ request.host.split(':')[0] }}:5013', '_blank')">install-config.yaml 과 agent-config.yaml 생성하러 가기</button>
+    </div>
+
+    <hr>
+
+    <!-- 섹션 5: OCP 설치 ISO 파일 생성 -->
+    <div class="section-container">
+        <h2>섹션 5: OCP 설치 ISO 파일 생성</h2>
+        <div class="warning-text">* 이 작업을 하기 전에 반드시 섹션4를 통해 install-config.yaml 과 agent-config.yaml 을 준비해야 합니다.</div>
+        <div class="action-item">
+            <button data-action-type="create_iso">OCP 설치 ISO 파일 생성</button>
+            <pre class="output-box" id="output-create_iso"></pre>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- 섹션 6: 설치 후 작업 -->
+    <div class="section-container">
+        <h2>섹션 6: 설치 후 작업</h2>
+        <div class="warning-text">* 이 작업을 하기 전에 OCP cluster 가 정상 설치 되었는지 확인하세요.</div>
+        <div class="action-item">
+            <button data-action-type="oc_login">OC login</button>
+            <pre class="output-box" id="output-oc_login"></pre>
+        </div>
+        <div class="action-item">
+            <button data-action-type="oc_get_node">`oc get node`</button>
+            <pre class="output-box" id="output-oc_get_node"></pre>
+        </div>
+        <div class="action-item">
+            <button data-action-type="apply_policies">미러링된 카탈로그 및 정책 적용</button>
+            <pre class="output-box" id="output-apply_policies"></pre>
         </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
+
 
