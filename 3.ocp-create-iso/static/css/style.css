@@ -49,3 +49,20 @@ button:hover {
     min-height: 50px;
     border: 1px solid #dee2e6;
 }
+.warning-text {
+    color: #c0392b;
+    font-weight: bold;
+    background-color: #f9e5e3;
+    border: 1px solid #e74c3c;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+textarea {
+    width: 90%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
