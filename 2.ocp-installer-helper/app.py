@@ -9,14 +9,12 @@ from flask import Flask, render_template, request, jsonify, make_response, rende
 app = Flask(__name__)
 DATA_DIR = 'data'
 KEY_DIR = 'generated_keys'
-# 생성된 설정 파일이 저장될 디렉터리
 CREATE_CONFIG_DIR = 'create_config'
 ALLOWED_EXTENSIONS = {'csv'}
 
 # --- 애플리케이션 시작 시 디렉토리 생성 ---
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(KEY_DIR, exist_ok=True)
-# app.py와 같은 레벨에 create_config 폴더 생성
 os.makedirs(CREATE_CONFIG_DIR, exist_ok=True)
 
 
@@ -30,32 +28,6 @@ def allowed_file(filename):
 def index():
     """메인 페이지를 렌더링합니다."""
     return render_template('index.html')
-
-
-# --- 섹션 0: 미러 레지스트리 ---
-@app.route('/configure-mirror', methods=['POST'])
-def configure_mirror():
-    """미러 레지스트리 구성 정보를 받아 JSON 파일로 저장합니다."""
-    data = request.form
-    mirror_info = {
-        "registry_url": f"{data['reg_domain']}:{data['reg_port']}",
-        "registry_user": data['reg_user'],
-        "registry_password": data['reg_password'],
-        # install-config.yaml 샘플에 맞춘 구조
-        "imageContentSources": [
-            {
-                "source": "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-                "mirrors": [f"{data['reg_domain']}:{data['reg_port']}/openshift/release"]
-            },
-            {
-                "source": "quay.io/openshift-release-dev/ocp-release",
-                "mirrors": [f"{data['reg_domain']}:{data['reg_port']}/openshift/release-images"]
-            }
-        ]
-    }
-    with open(os.path.join(DATA_DIR, 'mirror_reg.json'), 'w') as f:
-        json.dump(mirror_info, f, indent=4)
-    return f"✅ 미러 레지스트리 정보가 {os.path.join(DATA_DIR, 'mirror_reg.json')}에 저장되었습니다."
 
 
 # --- 섹션 1: 클러스터 정보 업로드 (CSV) ---
@@ -93,14 +65,6 @@ def load_cluster_info_api():
     except FileNotFoundError:
         return jsonify({"error": "클러스터 정보 파일(cluster_info.json)이 없습니다."}), 404
 
-@app.route('/api/load-mirror-secret')
-def load_mirror_secret_api():
-    try:
-        with open(os.path.join(DATA_DIR, 'mirror_reg.json')) as f:
-            return jsonify(json.load(f))
-    except FileNotFoundError:
-        return jsonify({"error": "미러 레지스트리 정보 파일(mirror_reg.json)이 없습니다."}), 404
-
 @app.route('/generate-ssh-key', methods=['POST'])
 def generate_ssh_key():
     key_name = request.json.get('key_name')
@@ -128,14 +92,19 @@ def generate_install_config():
     config_data = request.form.to_dict()
     config_data['proxy_enabled'] = 'proxy_enabled' in config_data
     
-    # imageContentSources는 미러 레지스트리 정보에서 가져옴
-    if config_data.get('secret_type') == 'mirror_secret':
-        try:
-            with open(os.path.join(DATA_DIR, 'mirror_reg.json')) as f:
-                mirror_data = json.load(f)
-            config_data['imageContentSources'] = mirror_data.get('imageContentSources', [])
-        except FileNotFoundError:
-            config_data['imageContentSources'] = []
+    # [수정] '미러레지스트리 사용' 체크 시 imageContentSources를 동적으로 생성
+    if 'mirror_enabled' in config_data and config_data.get('registry_address'):
+        reg_addr = config_data['registry_address']
+        config_data['imageContentSources'] = [
+            {
+                "source": "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+                "mirrors": [f"{reg_addr}/openshift/release"]
+            },
+            {
+                "source": "quay.io/openshift-release-dev/ocp-release",
+                "mirrors": [f"{reg_addr}/openshift/release-images"]
+            }
+        ]
     else:
         config_data['imageContentSources'] = []
 
@@ -175,4 +144,3 @@ def generate_agent_config():
 # --- 애플리케이션 실행 ---
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5023)
-
