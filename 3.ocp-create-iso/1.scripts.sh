@@ -77,7 +77,7 @@ After=network.target
 User=$APP_USER
 Group=$APP_GROUP
 WorkingDirectory=$APP_TARGET_DIR
-ExecStart=$(command -v gunicorn) --workers 4 --bind 0.0.0.0:${APP_PORT} --timeout 300 app:app
+ExecStart=$(command -v gunicorn) --workers 4 --bind 0.0.0.0:${APP_PORT} --timeout 1200 app:app
 Restart=always
 
 [Install]
@@ -109,6 +109,18 @@ EOF
 chmod 440 /etc/sudoers.d/ocp-iso-creator
 echo "sudoers 파일 생성 완료."
 echo
+
+
+# /opt 디렉터리에 대한 쓰기 권한 허용
+sudo setsebool -P httpd_unified 1
+
+# Quay 디렉터리에 대한 컨텍스트 설정
+sudo semanage fcontext -a -t container_file_t "/opt/openshift/init-quay(/.*)?"
+sudo restorecon -Rv /opt/openshift/init-quay
+
+
+
+
 
 # 6. 방화벽 및 SELinux 포트 설정
 echo ">>> [단계 6/8] 방화벽 및 SELinux 구성"
@@ -148,6 +160,27 @@ systemctl restart ${SERVICE_NAME}.service
 systemctl enable ${SERVICE_NAME}.service
 echo "서비스가 활성화되고 시작되었습니다."
 echo
+
+
+sudo semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/html/ocp-installer-helper/data(/.*)?"
+sudo restorecon -Rv /var/www/html/ocp-installer-helper/data
+sudo semanage fcontext -a -t named_conf_t "/etc/named.conf"
+sudo semanage fcontext -a -t named_conf_t "/etc/named.rfc1912.zones"
+sudo semanage fcontext -a -t named_zone_t "/var/named(/.*)?"
+sudo restorecon -Rv /etc/named.conf /etc/named.rfc1912.zones /var/named
+sudo semanage fcontext -a -t chronyd_conf_t "/etc/chrony.conf"
+sudo restorecon -Rv /etc/chrony.conf
+sudo semanage fcontext -a -t haproxy_etc_t "/etc/haproxy/haproxy.cfg"
+sudo restorecon -Rv /etc/haproxy/haproxy.cfg
+# /opt 디렉터리에 대한 쓰기 권한 허용
+sudo setsebool -P httpd_unified 1
+
+# Quay 디렉터리에 대한 컨텍스트 설정
+sudo semanage fcontext -a -t container_file_t "/opt/openshift/init-quay(/.*)?"
+sudo restorecon -Rv /opt/openshift/init-quay
+
+sudo systemctl restart ocp-create-iso.service
+
 
 echo "=================================================="
 echo "OCP ISO 생성 도우미 배포가 완료되었습니다."
