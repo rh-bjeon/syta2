@@ -1,6 +1,3 @@
-
-
-<!-- templates/domain.rev.j2 -->
 {%- set rev_bastion = data.nodeip_bastion.split('.')[-1] %}
 {%- set rev_master0 = data.nodeip_master0.split('.')[-1] %}
 {%- set rev_master1 = data.nodeip_master1.split('.')[-1] %}
@@ -32,4 +29,3 @@ $TTL 10M
 {{ rev_master2 }}       IN      PTR     etcd-2.{{ data.metadata_name }}.{{ data.base_domain }}.
 {{ rev_bastion }}       IN      PTR     api.{{ data.metadata_name }}.{{ data.base_domain }}.
 {{ rev_bastion }}       IN      PTR     api-int.{{ data.metadata_name }}.{{ data.base_domain }}.
-
