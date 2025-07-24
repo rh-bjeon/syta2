@@ -5,19 +5,28 @@ import shutil
 from flask import Flask, render_template, request, jsonify, render_template_string
 from io import StringIO
 import csv
+import glob
 
 # --- 기본 설정 ---
 app = Flask(__name__)
 # 공유 데이터 경로 (이전 앱에서 사용하던 경로)
 SHARED_DATA_PATH = "/var/www/html/ocp-installer-helper/data/cluster_info.json"
+# 이전 앱에서 생성된 설정/이미지 경로
+PREV_APP_BASE_DIR = "/disk1/ocp_install"
+MIRROR_CONFIG_FILE = os.path.join(PREV_APP_BASE_DIR, "oc-mirror/mirror-config/imagesetconfig.yaml")
+MIRROR_IMAGES_DIR = os.path.join(PREV_APP_BASE_DIR, "oc-mirror/mirror-images")
+# 이 앱에서 사용할 경로
+ISO_CREATE_DIR = os.path.join(PREV_APP_BASE_DIR, "create-iso")
+PREV_APP_CONFIG_DIR = "/var/www/html/ocp-installer-helper/create_config"
+QUAY_ROOT = "/opt/openshift/init-quay"
 
 # --- Helper 함수 ---
-def run_command(command):
+def run_command(command, capture_output=True):
     """지정된 셸 명령어를 실행하고 결과를 반환합니다."""
     try:
         result = subprocess.run(
             command, shell=True, check=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            capture_output=capture_output, text=True, executable='/bin/bash'
         )
         return {"success": True, "output": result.stdout, "error": result.stderr}
     except subprocess.CalledProcessError as e:
@@ -32,18 +41,21 @@ def load_cluster_data():
         return None
 
 def backup_file(filepath):
-    """파일을 백업합니다."""
+    """파일을 백업하고 메시지를 반환합니다."""
     if os.path.exists(filepath):
         backup_path = f"{filepath}.bak_{os.getpid()}"
-        shutil.copy2(filepath, backup_path)
+        run_command(f"sudo cp {filepath} {backup_path}")
         return f"기존 파일 백업: {backup_path}"
     return "백업할 기존 파일 없음"
 
 def write_file_as_root(filepath, content):
     """파일을 root 권한으로 씁니다."""
-    # tee 명령어를 사용하여 root 권한으로 파일 생성/덮어쓰기
-    command = f"echo '{content}' | sudo tee {filepath}"
-    return run_command(command)
+    # 임시 파일에 내용을 쓰고, sudo mv로 이동하여 권한 문제를 회피
+    temp_file = f"/tmp/temp_file_{os.getpid()}"
+    with open(temp_file, 'w') as f:
+        f.write(content)
+    run_command(f"sudo mv {temp_file} {filepath}")
+    return run_command(f"sudo chown root:root {filepath}") # 소유권 확인
 
 # --- 기본 페이지 및 API 라우팅 ---
 @app.route('/')
@@ -77,30 +89,26 @@ def upload_csv():
     except Exception as e:
         return jsonify({"success": False, "error": f"파일 처리 중 오류 발생: {e}"})
 
-# --- Section 2: Bastion 확정 ---
-@app.route('/api/configure', methods=['POST'])
-def configure_bastion():
-    config_type = request.json.get('type')
+# --- Section 2, 3, 5, 6: 버튼 액션 처리 ---
+@app.route('/api/execute-action', methods=['POST'])
+def execute_action():
+    action_type = request.json.get('type')
     data = load_cluster_data()
-    if not data:
+    if not data and action_type not in ['ca_trust']: # CA 신뢰 설정은 데이터 없이도 가능
         return jsonify({"success": False, "error": "클러스터 정보(cluster_info.json)가 없습니다. 먼저 CSV를 업로드하세요."})
 
-    # --- Hostname 변경 ---
-    if config_type == 'hostname':
+    # --- Section 2 Actions ---
+    if action_type == 'hostname':
         hostname = f"{data['hostname_bastion']}.{data['metadata_name']}.{data['base_domain']}"
         return jsonify(run_command(f"sudo hostnamectl set-hostname {hostname}"))
-
-    # --- IP 변경 ---
-    elif config_type == 'ip':
+    
+    if action_type == 'ip':
         ip = data['nodeip_bastion']
-        prefix = data['prefix_master0'] # 예시로 master0의 prefix 사용
-        gateway = data['gw_master0'] # gw_bastion 키가 없을 경우 대비
+        prefix = data['prefix_master0']
+        gateway = data.get('gw_bastion', data.get('gw_master0', ''))
         dns = data['nodeip_bastion']
         search_domain = f"{data['metadata_name']}.{data['base_domain']}"
-        # nmcli를 사용하여 네트워크 설정 변경 (더 안정적)
-        # 실제 인터페이스 이름(예: eth0)을 알아야 함. 여기서는 'enp1s0'으로 가정.
-        # 이 부분은 환경에 맞게 수정이 필요할 수 있습니다.
-        interface_name = "enf1s0" 
+        interface_name = data.get('interface_bastion', 'eth0')
         command = (
             f"sudo nmcli connection modify {interface_name} "
             f"ipv4.method manual ipv4.addresses {ip}/{prefix} "
@@ -109,53 +117,103 @@ def configure_bastion():
         )
         return jsonify(run_command(command))
 
-    # --- DNS 설정 ---
-    elif config_type == 'dns':
-        # named.conf 수정
+    if action_type == 'dns':
         backup_file("/etc/named.conf")
         run_command("sudo sed -i 's/dnssec-validation yes;/dnssec-validation no;/' /etc/named.conf")
         run_command("sudo sed -i '/listen-on-v6/a \\        forwarders { 8.8.8.8; };\\n        forward first;\\n' /etc/named.conf")
         
-        # named.rfc1912.zones 수정
         backup_file("/etc/named.rfc1912.zones")
         rev_ip = '.'.join(data['machine_network_cidr'].split('/')[0].split('.')[:3][::-1])
-        zone_config = render_template_string(
-            open('templates/named.rfc1912.zones.j2').read(),
-            base_domain=data['base_domain'],
-            rev_ip=rev_ip
-        )
+        zone_config = render_template_string(open('templates/named.rfc1912.zones.j2').read(), base_domain=data['base_domain'], rev_ip=rev_ip)
         run_command(f"echo '{zone_config}' | sudo tee -a /etc/named.rfc1912.zones")
 
-        # zone 파일 생성
         zone_content = render_template_string(open('templates/domain.zone.j2').read(), data=data)
         write_file_as_root(f"/var/named/{data['base_domain']}.zone", zone_content)
 
-        # rev 파일 생성
         rev_content = render_template_string(open('templates/domain.rev.j2').read(), data=data)
         write_file_as_root(f"/var/named/{data['base_domain']}.rev", rev_content)
 
-        # named 서비스 시작
         return jsonify(run_command("sudo systemctl enable --now named"))
 
-    # --- Chrony 설정 ---
-    elif config_type == 'chrony':
+    if action_type == 'chrony':
         backup_file("/etc/chrony.conf")
-        chrony_content = render_template_string(
-            open('templates/chrony.conf.j2').read(),
-            machine_network_cidr=data['machine_network_cidr']
-        )
+        chrony_content = render_template_string(open('templates/chrony.conf.j2').read(), machine_network_cidr=data['machine_network_cidr'])
         write_file_as_root("/etc/chrony.conf", chrony_content)
         return jsonify(run_command("sudo systemctl enable --now chronyd"))
 
-    # --- HAProxy 설정 ---
-    elif config_type == 'haproxy':
+    if action_type == 'haproxy':
         backup_file("/etc/haproxy/haproxy.cfg")
         haproxy_content = render_template_string(open('templates/haproxy.cfg.j2').read(), data=data)
         write_file_as_root("/etc/haproxy/haproxy.cfg", haproxy_content)
-        run_command("sudo setsebool -P haproxy_connect_any=1")
         return jsonify(run_command("sudo systemctl enable --now haproxy"))
 
-    return jsonify({"success": False, "error": "알 수 없는 설정 타입입니다."})
+    # --- Section 3 Actions ---
+    if action_type == 'mirror_install':
+        cmd = (f"sudo /usr/local/bin/mirror-registry install --initUser {data['local_registry_user']} "
+               f"--initPassword {data['local_registry_password']} --quayHostname {data['local_registry']} "
+               f"--quayRoot {QUAY_ROOT} --pgStorage {QUAY_ROOT}/pg-storage --quayStorage {QUAY_ROOT}/quay-storage -v")
+        return jsonify(run_command(cmd))
+
+    if action_type == 'ca_trust':
+        cmd = (f"sudo cp -f {QUAY_ROOT}/quay-rootCA/rootCA.pem /etc/pki/ca-trust/source/anchors/ && "
+               f"sudo cp -f {QUAY_ROOT}/quay-config/ssl.cert /etc/pki/ca-trust/source/anchors/ && "
+               f"sudo update-ca-trust")
+        return jsonify(run_command(cmd))
+    
+    if action_type == 'get_ca_cert':
+        try:
+            with open(f"{QUAY_ROOT}/quay-rootCA/rootCA.pem", 'r') as f:
+                cert_content = f.read()
+            return jsonify({"success": True, "output": cert_content})
+        except FileNotFoundError:
+            return jsonify({"success": False, "error": "rootCA.pem 파일을 찾을 수 없습니다. 'Mirror registry 구성'을 먼저 실행하세요."})
+
+    if action_type == 'mirror_start':
+        # mirror-registry는 podman quadlet으로 관리될 수 있음
+        return jsonify(run_command("sudo systemctl enable --now quay-pod.service"))
+
+    if action_type == 'mirror_push':
+        cmd = (f"sudo oc mirror -c {MIRROR_CONFIG_FILE} "
+               f"docker://{data['local_registry']} --v2 --dest-skip-tls")
+        # 이 작업은 매우 오래 걸리므로 백그라운드 실행
+        subprocess.Popen(cmd, shell=True, executable='/bin/bash')
+        return jsonify({"success": True, "message": "이미지 푸시 작업이 백그라운드에서 시작되었습니다. 서버 로그를 확인하세요."})
+
+    # --- Section 5 Actions ---
+    if action_type == 'create_iso':
+        run_command(f"sudo mkdir -p {ISO_CREATE_DIR}")
+        run_command(f"sudo cp {PREV_APP_CONFIG_DIR}/install-config.yaml {ISO_CREATE_DIR}/")
+        run_command(f"sudo cp {PREV_APP_CONFIG_DIR}/agent-config.yaml {ISO_CREATE_DIR}/")
+        run_command(f"sudo chown -R apache:apache {ISO_CREATE_DIR}")
+        
+        cmd = f"sudo openshift-install agent create image --dir={ISO_CREATE_DIR}"
+        return jsonify(run_command(cmd))
+
+    # --- Section 6 Actions ---
+    if action_type == 'oc_login':
+        kubeconfig_path = f"{ISO_CREATE_DIR}/auth/kubeconfig"
+        return jsonify({"success": True, "message": "터미널에서 아래 명령어를 복사하여 실행하세요:", "output": f"export KUBECONFIG={kubeconfig_path}"})
+
+    if action_type == 'oc_get_node':
+        kubeconfig_path = f"{ISO_CREATE_DIR}/auth/kubeconfig"
+        return jsonify(run_command(f"export KUBECONFIG={kubeconfig_path} && oc get node"))
+
+    if action_type == 'apply_policies':
+        cmd1 = "export KUBECONFIG={0}/auth/kubeconfig && oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{{\"spec\":{{\"managementState\": \"Managed\"}}}}'".format(ISO_CREATE_DIR)
+        cmd2 = "export KUBECONFIG={0}/auth/kubeconfig && oc patch OperatorHub cluster --type json -p '[{{\"op\": \"add\", \"path\": \"/spec/disableAllDefaultSources\", \"value\": true}}]'".format(ISO_CREATE_DIR)
+        
+        # results-XXXXX 디렉터리 찾기
+        results_dirs = glob.glob(f"{MIRROR_IMAGES_DIR}/working-dir/results-*")
+        if not results_dirs:
+            return jsonify({"success": False, "error": "results-XXXXX 디렉터리를 찾을 수 없습니다."})
+        latest_results_dir = max(results_dirs, key=os.path.getmtime)
+        
+        cmd3 = f"export KUBECONFIG={ISO_CREATE_DIR}/auth/kubeconfig && oc apply -f {latest_results_dir}/"
+        
+        full_command = f"{cmd1} && {cmd2} && {cmd3}"
+        return jsonify(run_command(full_command))
+
+    return jsonify({"success": False, "error": "알 수 없는 액션 타입입니다."})
 
 # --- 애플리케이션 실행 ---
 if __name__ == '__main__':
