@@ -42,7 +42,7 @@ echo
 
 # 1. 필수 시스템 패키지 설치
 echo ">>> [단계 1/8] 필수 시스템 패키지 설치"
-dnf install -y python3 python3-pip git gcc python3-devel rsync policycoreutils-python-utils bind-utils
+dnf install -y python3 python3-pip git gcc python3-devel rsync policycoreutils-python-utils bind-utils chrony haproxy
 pip3 install gunicorn
 echo "패키지 설치 완료."
 echo
@@ -77,7 +77,7 @@ After=network.target
 User=$APP_USER
 Group=$APP_GROUP
 WorkingDirectory=$APP_TARGET_DIR
-ExecStart=$(command -v gunicorn) --workers 4 --bind 0.0.0.0:${APP_PORT} --timeout 1200 app:app
+ExecStart=$(command -v gunicorn) --workers 4 --bind 0.0.0.0:${APP_PORT} --timeout 300 app:app
 Restart=always
 
 [Install]
@@ -101,6 +101,10 @@ apache ALL=(ALL) NOPASSWD: /usr/bin/tee
 apache ALL=(ALL) NOPASSWD: /usr/bin/chown
 apache ALL=(ALL) NOPASSWD: /usr/sbin/setsebool
 apache ALL=(ALL) NOPASSWD: /usr/sbin/semanage
+apache ALL=(ALL) NOPASSWD: /usr/local/bin/mirror-registry
+apache ALL=(ALL) NOPASSWD: /usr/bin/update-ca-trust
+apache ALL=(ALL) NOPASSWD: /usr/local/bin/oc
+apache ALL=(ALL) NOPASSWD: /usr/local/bin/openshift-install
 EOF
 chmod 440 /etc/sudoers.d/ocp-iso-creator
 echo "sudoers 파일 생성 완료."
