@@ -35,9 +35,10 @@ imageContentSources:
 {% endfor %}
 {% endif %}
 pullSecret: |
-{{ pullSecret | indent(2) }}
+{# [수정] safe 필터를 추가하여 HTML 이스케이프를 방지하고, indent의 두 번째 인자를 true로 설정하여 첫 줄도 들여쓰기합니다. #}
+{{ pullSecret | safe | indent(2, true) }}
 sshKey: '{{ sshKey | trim }}'
 {% if additionalTrustBundle %}
 additionalTrustBundle: |
-{{ additionalTrustBundle | indent(2) }}
+{{ additionalTrustBundle | indent(2, true) }}
 {% endif %}
