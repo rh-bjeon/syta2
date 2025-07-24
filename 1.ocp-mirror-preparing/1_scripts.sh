@@ -70,6 +70,8 @@ apache ALL=(ALL) NOPASSWD: /usr/bin/chmod
 apache ALL=(ALL) NOPASSWD: /usr/bin/mv
 apache ALL=(ALL) NOPASSWD: /usr/bin/mkdir
 apache ALL=(ALL) NOPASSWD: /usr/bin/chown
+apache ALL=(ALL) NOPASSWD: /usr/bin/oc
+apache ALL=(ALL) NOPASSWD: /usr/bin/oc-mirror
 EOF'
 
 
