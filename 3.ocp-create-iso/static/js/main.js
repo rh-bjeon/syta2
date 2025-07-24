@@ -39,15 +39,32 @@ document.addEventListener('DOMContentLoaded', () => {
         showResult(outputBox, result);
     });
 
-    // Section 2: Bastion Configuration
-    document.querySelectorAll('button[data-config-type]').forEach(button => {
+    // Section 2, 3, 5, 6: Button Actions
+    document.querySelectorAll('button[data-action-type]').forEach(button => {
         button.addEventListener('click', async () => {
-            const configType = button.dataset.configType;
-            const outputBox = document.getElementById(`output-${configType}`);
+            const actionType = button.dataset.actionType;
+            const outputBox = document.getElementById(`output-${actionType}`);
             outputBox.textContent = '명령 실행 중...';
 
-            const result = await callApi('/api/configure', { type: configType });
+            const result = await callApi('/api/execute-action', { type: actionType });
+            
+            // CA 인증서 가져오기 특별 처리
+            if (actionType === 'get_ca_cert' && result.success) {
+                document.getElementById('ca_cert_textbox').value = result.output;
+            }
+            
             showResult(outputBox, result);
         });
     });
+
+    // 클립보드 복사 버튼
+    const copyBtn = document.getElementById('btn_copy_ca');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+            const textbox = document.getElementById('ca_cert_textbox');
+            textbox.select();
+            document.execCommand('copy');
+            alert('CA 인증서가 클립보드에 복사되었습니다.');
+        });
+    }
 });
