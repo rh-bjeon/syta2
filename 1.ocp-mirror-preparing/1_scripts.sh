@@ -66,7 +66,6 @@ if ! sudo semanage port -l | grep -q "^http_port_t.*tcp.*8080"; then
 fi
 
 sudo systemctl enable --now libvirtd
-sudo systemctl enable --now httpd
 
 
 
