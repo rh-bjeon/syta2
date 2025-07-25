@@ -164,21 +164,21 @@ def execute_action():
         run_command(f"sudo chown root:named {zone_file_path} {rev_file_path}")
         run_command(f"sudo restorecon /etc/named.conf /etc/named.rfc1912.zones")
         run_command(f"sudo restorecon -v /var/named/{data['base_domain']}.*")
-        return jsonify(run_command("sudo systemctl enable --now named"))
+        return jsonify(run_command("sudo systemctl enable named && sudo systemctl restart named"))
 
     if action_type == 'chrony':
         backup_file("/etc/chrony.conf")
         chrony_content = render_template_string(open('templates/chrony.conf.j2').read(), machine_network_cidr=data['machine_network_cidr'])
         write_file_as_root("/etc/chrony.conf", chrony_content)
         run_command("sudo restorecon /etc/chrony.conf")
-        return jsonify(run_command("sudo systemctl enable --now chronyd"))
+        return jsonify(run_command("sudo systemctl enable --now chronyd && sudo systemctl restart chronyd"))
 
     if action_type == 'haproxy':
         backup_file("/etc/haproxy/haproxy.cfg")
         haproxy_content = render_template_string(open('templates/haproxy.cfg.j2').read(), data=data)
         write_file_as_root("/etc/haproxy/haproxy.cfg", haproxy_content)
         run_command("sudo restorecon /etc/haproxy/haproxy.cfg")
-        return jsonify(run_command("sudo systemctl enable --now haproxy"))
+        return jsonify(run_command("sudo systemctl enable --now haproxy && sudo systemctl restart haproxy"))
 
     # --- Section 3 Actions ---
     if action_type == 'mirror_install':
