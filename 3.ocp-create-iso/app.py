@@ -182,7 +182,9 @@ def execute_action():
 
     # --- Section 3 Actions ---
     if action_type == 'mirror_install':
-        cmd = (f"sudo /usr/local/bin/mirror-registry install --initUser {data['local_registry_user']} --initPassword {data['local_registry_password']} --quayHostname {data['local_registry']} --quayRoot {QUAY_ROOT} --pgStorage {QUAY_ROOT}/pg-storage --quayStorage {QUAY_ROOT}/quay-storage -v")
+        cmd = (f"sudo /usr/local/bin/mirror-registry install --initUser {data['local_registry_user']} "
+               f"--initPassword {data['local_registry_password']} --quayHostname {data['local_registry']} "
+               f"--quayRoot {QUAY_ROOT}  -v")
         return jsonify(run_command(cmd))
 
     if action_type == 'ca_trust':
