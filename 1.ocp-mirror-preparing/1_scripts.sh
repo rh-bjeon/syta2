@@ -58,7 +58,7 @@ sudo mkdir /ocp_install/
 echo ">>> [단계 1/7] 필수 시스템 패키지 설치"
 #dnf install -y python3 python3-pip git gcc python3-devel rsync
 echo "Gunicorn (WSGI 서버)을 설치합니다..."
-sudo pip3 install beautifulsoup4 requests
+sudo pip3 install beautifulsoup4 requests gunicorn 
 echo "패키지 설치 완료."
 echo
 
