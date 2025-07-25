@@ -171,9 +171,9 @@ sudo semanage fcontext -a -t named_conf_t "/etc/named.conf"
 sudo semanage fcontext -a -t named_conf_t "/etc/named.rfc1912.zones"
 sudo semanage fcontext -a -t named_zone_t "/var/named(/.*)?"
 sudo restorecon -Rv /etc/named.conf /etc/named.rfc1912.zones /var/named
-sudo semanage fcontext -a -t chronyd_conf_t "/etc/chrony.conf"
+#sudo semanage fcontext -a -t chronyd_conf_t "/etc/chrony.conf"
 sudo restorecon -Rv /etc/chrony.conf
-sudo semanage fcontext -a -t haproxy_etc_t "/etc/haproxy/haproxy.cfg"
+#sudo semanage fcontext -a -t haproxy_etc_t "/etc/haproxy/haproxy.cfg"
 sudo restorecon -Rv /etc/haproxy/haproxy.cfg
 # /opt 디렉터리에 대한 쓰기 권한 허용
 sudo setsebool -P httpd_unified 1
