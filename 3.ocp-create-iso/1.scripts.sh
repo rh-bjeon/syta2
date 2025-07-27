@@ -179,8 +179,8 @@ sudo restorecon -Rv /etc/haproxy/haproxy.cfg
 sudo setsebool -P httpd_unified 1
 
 # Quay 디렉터리에 대한 컨텍스트 설정
-sudo semanage fcontext -a -t container_file_t "/opt/openshift/init-quay(/.*)?"
-sudo restorecon -Rv /opt/openshift/init-quay
+#sudo semanage fcontext -a -t container_file_t "/opt/openshift/init-quay(/.*)?"
+#sudo restorecon -Rv /opt/openshift/init-quay
 
 sudo systemctl restart ocp-create-iso.service
 
