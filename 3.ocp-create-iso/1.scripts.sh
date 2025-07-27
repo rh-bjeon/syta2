@@ -165,8 +165,8 @@ echo "서비스가 활성화되고 시작되었습니다."
 echo
 
 
-sudo semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/html/ocp-installer-helper/data(/.*)?"
-sudo restorecon -Rv /var/www/html/ocp-installer-helper/data
+#sudo semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/html/ocp-installer-helper/data(/.*)?"
+#sudo restorecon -Rv /var/www/html/ocp-installer-helper/data
 sudo semanage fcontext -a -t named_conf_t "/etc/named.conf"
 sudo semanage fcontext -a -t named_conf_t "/etc/named.rfc1912.zones"
 sudo semanage fcontext -a -t named_zone_t "/var/named(/.*)?"
