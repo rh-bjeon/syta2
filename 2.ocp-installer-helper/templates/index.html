@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>5단계 : Install/Agent-config 생성</title>
+    <title>OCP 설치 도우미</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>5단계 : Install/Agent-config 생성</h1>
+    <h1>OCP(OpenShift) 설치 자동화 도우미</h1>
 
     <!-- 섹션 1: 클러스터 정보 업로드 -->
     <div class="section-container">
@@ -67,8 +67,9 @@
             <button type="button" onclick="generateMirrorPullSecret()">Mirror Secret 불러오기</button><br><br>
             
             <label>Additional Trust Bundle (CA):</label><br>
-            <textarea name="additionalTrustBundle" id="additionalTrustBundle" rows="10" cols="80" placeholder="여기에 PEM 형식의 CA 인증서를 붙여넣으세요."></textarea><br><br>
-            
+            <textarea name="additionalTrustBundle" id="additionalTrustBundle" rows="10" cols="80" placeholder="여기에 PEM 형식의 CA 인증서를 붙여넣거나 'Mirror CA  불러오기'를 클릭하세요."></textarea><br><br>
+            <button type="button" onclick="loadMirrorCa()">Mirror CA 불러오기</button><br><br>
+
             <button type="submit" data-section="2"><code>install-config.yaml</code> 생성하기</button>
         </form>
         <div class="status-box" id="status-message-2"></div>
