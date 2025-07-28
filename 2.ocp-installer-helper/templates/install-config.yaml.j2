@@ -6,7 +6,7 @@ compute:
 - architecture: amd64
   hyperthreading: Enabled
   name: worker
-  replicas: 3
+  replicas: {{ worker_replicas | default(3) }}
 controlPlane:
   architecture: amd64
   hyperthreading: Enabled
@@ -24,6 +24,16 @@ networking:
 platform:
   none: {}
 fips: false
+{% if imageContentSources %}
+imageContentSources:
+{% for item in imageContentSources %}
+- mirrors:
+  {% for mirror in item.mirrors %}
+  - {{ mirror }}
+  {% endfor %}
+  source: {{ item.source }}
+{% endfor %}
+{% endif %}
 pullSecret: |
 {# [수정] safe 필터를 추가하여 HTML 이스케이프를 방지하고, indent의 두 번째 인자를 true로 설정하여 첫 줄도 들여쓰기합니다. #}
 {{ pullSecret | safe | indent(2, true) }}
