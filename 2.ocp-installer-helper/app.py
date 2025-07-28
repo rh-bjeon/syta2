@@ -8,8 +8,8 @@ from flask import Flask, render_template, request, jsonify, make_response, rende
 # --- 기본 설정 ---
 app = Flask(__name__)
 DATA_DIR = 'data'
-KEY_DIR = 'generated_keys'
-CREATE_CONFIG_DIR = 'create_config'
+KEY_DIR = '/ocp_install/generated_keys'
+CREATE_CONFIG_DIR = '/ocp_install/create_config'
 ALLOWED_EXTENSIONS = {'csv'}
 
 # --- 애플리케이션 시작 시 디렉토리 생성 ---
@@ -22,6 +22,21 @@ def allowed_file(filename):
     """허용된 파일 확장자인지 확인합니다."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# [수정] 누락된 run_command 함수 추가
+def run_command(command):
+    """지정된 셸 명령어를 실행하고 결과를 반환합니다."""
+    try:
+        result = subprocess.run(
+            command, shell=True, check=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+        return {"success": True, "output": result.stdout, "error": result.stderr}
+    except subprocess.CalledProcessError as e:
+        return {"success": False, "output": e.stdout, "error": e.stderr}
+
+
 
 # --- 기본 페이지 라우팅 ---
 @app.route('/')
@@ -84,6 +99,44 @@ def get_ssh_key(key_name):
     except FileNotFoundError:
         return jsonify({"error": "해당 이름의 Public Key를 찾을 수 없습니다."}), 404
 
+# [수정] Mirror CA 인증서를 시스템 신뢰 저장소에서 읽어오도록 경로 변경
+#@app.route('/api/get-mirror-ca')
+#def get_mirror_ca():
+#    """/etc/pki/ca-trust/source/anchors/rootCA.pem 파일 내용을 읽어 반환합니다."""
+#    ca_path = "/etc/pki/ca-trust/source/anchors/rootCA.pem"
+#    if not os.path.exists(ca_path):
+#        return jsonify({"success": False, "error": f"{ca_path} 파일을 찾을 수 없습니다. 다른 앱(ocp-create-iso)에서 'CA 신뢰 설정'을 먼저 실행했는지 확인하세요."})
+    
+    # root 소유의 파일일 수 있으므로 sudo cat으로 읽음
+#    result = run_command(f"sudo cat {ca_path}")
+    
+#    if result['success']:
+#        return jsonify({"success": True, "ca_content": result['output']})
+#    else:
+#        return jsonify({"success": False, "error": f"CA 인증서 파일을 읽을 수 없습니다: {result['error']}"})
+
+
+@app.route('/api/get-mirror-ca')
+def get_mirror_ca():
+    """/etc/pki/ca-trust/source/anchors/rootCA.pem 파일 내용을 읽어 반환합니다."""
+    ca_path = "/etc/pki/ca-trust/source/anchors/rootCA.pem"
+    if not os.path.exists(ca_path):
+        return jsonify({"success": False, "error": f"{ca_path} 파일을 찾을 수 없습니다. 다른 앱(ocp-create-iso)에서 'CA 신뢰 설정'을 먼저 실행했는지 확인하세요."})
+
+    try:
+        # 파일을 읽기 전에 모든 사용자에게 읽기 권한을 부여합니다.
+        chmod_result = run_command(f"sudo chmod a+r {ca_path}")
+        if not chmod_result['success']:
+            return jsonify({"success": False, "error": f"파일 권한 변경 실패: {chmod_result['error']}"})
+
+        # 이제 sudo 없이 직접 파일을 읽을 수 있습니다.
+        with open(ca_path, 'r') as f:
+            cert_content = f.read()
+        
+        return jsonify({"success": True, "ca_content": cert_content})
+    except Exception as e:
+        return jsonify({"success": False, "error": f"파일을 읽는 중 오류 발생: {str(e)}"})
+
 
 # --- YAML 생성 라우팅 ---
 @app.route('/generate-install-config', methods=['POST'])
@@ -92,21 +145,6 @@ def generate_install_config():
     config_data = request.form.to_dict()
     config_data['proxy_enabled'] = 'proxy_enabled' in config_data
     
-    # [수정] '미러레지스트리 사용' 체크 시 imageContentSources를 동적으로 생성
-    if 'mirror_enabled' in config_data and config_data.get('registry_address'):
-        reg_addr = config_data['registry_address']
-        config_data['imageContentSources'] = [
-            {
-                "source": "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-                "mirrors": [f"{reg_addr}/openshift/release"]
-            },
-            {
-                "source": "quay.io/openshift-release-dev/ocp-release",
-                "mirrors": [f"{reg_addr}/openshift/release-images"]
-            }
-        ]
-    else:
-        config_data['imageContentSources'] = []
 
     with open('templates/install-config.yaml.j2') as f:
         template_str = f.read()
