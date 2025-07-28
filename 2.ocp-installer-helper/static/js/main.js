@@ -151,6 +151,33 @@ function generateMirrorPullSecret() {
     document.getElementById('pullSecret').value = JSON.stringify(pullSecretObject, null, 4);
 }
 
+
+// [신규] Mirror CA 인증서를 불러오는 함수 (오류 처리 강화)
+async function loadMirrorCa() {
+    try {
+        const response = await fetch('/api/get-mirror-ca');
+        
+        // 서버 응답이 성공적인지 먼저 확인
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`서버 오류: ${response.status} ${response.statusText}\n${errorText}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('additionalTrustBundle').value = data.ca_content;
+            alert('✅ Mirror CA 인증서를 성공적으로 불러왔습니다.');
+        } else {
+            alert(`❌ 오류: ${data.error}`);
+        }
+    } catch (error) {
+        // 네트워크 오류 또는 JSON 파싱 오류 처리
+        alert(`❌ 요청 실패: ${error.message}`);
+    }
+}
+
+
 async function generateSshKey() {
     const keyName = document.getElementById('key_name').value;
     if (!keyName) {
