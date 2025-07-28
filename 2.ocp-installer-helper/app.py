@@ -4,6 +4,9 @@ import subprocess
 import csv
 from io import StringIO
 from flask import Flask, render_template, request, jsonify, make_response, render_template_string
+import glob
+import yaml # PyYAML 라이브러리 임포
+
 
 # --- 기본 설정 ---
 app = Flask(__name__)
@@ -11,6 +14,7 @@ DATA_DIR = 'data'
 KEY_DIR = '/ocp_install/generated_keys'
 CREATE_CONFIG_DIR = '/ocp_install/create_config'
 ALLOWED_EXTENSIONS = {'csv'}
+OC_MIRROR_RESULTS_DIR = "/ocp_install/oc-mirror/mirror-images/working-dir/cluster-resources/"
 
 # --- 애플리케이션 시작 시 디렉토리 생성 ---
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -36,7 +40,50 @@ def run_command(command):
     except subprocess.CalledProcessError as e:
         return {"success": False, "output": e.stdout, "error": e.stderr}
 
+# [수정] idms/itms 파일을 찾아 파싱하는 헬퍼 함수
+def find_and_parse_mirror_yamls():
+    """가장 최신의 results-* 디렉터리에서 idms/itms YAML을 찾아 imageContentSources 형식으로 파싱합니다."""
+    try:
+        results_dirs = glob.glob(f"{OC_MIRROR_RESULTS_DIR}")
+        if not results_dirs:
+            return None, "oc mirror 결과 디렉터리(results-*)를 찾을 수 없습니다."
+        
+        latest_results_dir = max(results_dirs, key=os.path.getmtime)
+        
+        idms_path = os.path.join(latest_results_dir, 'idms-oc-mirror.yaml')
+        itms_path = os.path.join(latest_results_dir, 'itms-oc-mirror.yaml')
 
+        sources = []
+        
+        # IDMS 파일 파싱 (ImageDigestMirrorSet)
+        if os.path.exists(idms_path):
+            with open(idms_path, 'r') as f:
+                # [수정] safe_load_all을 사용하여 여러 YAML 문서를 처리
+                idms_documents = yaml.safe_load_all(f)
+                for idms_data in idms_documents:
+                    if idms_data and 'spec' in idms_data and 'imageDigestMirrors' in idms_data['spec']:
+                        for item in idms_data['spec']['imageDigestMirrors']:
+                            sources.append({
+                                "source": item.get("source"),
+                                "mirrors": item.get("mirrors", [])
+                            })
+
+        # ITMS 파일 파싱 (ImageTagMirrorSet)
+        if os.path.exists(itms_path):
+            with open(itms_path, 'r') as f:
+                # [수정] safe_load_all을 사용하여 여러 YAML 문서를 처리
+                itms_documents = yaml.safe_load_all(f)
+                for itms_data in itms_documents:
+                    if itms_data and 'spec' in itms_data and 'imageTagMirrors' in itms_data['spec']:
+                        for item in itms_data['spec']['imageTagMirrors']:
+                            sources.append({
+                                "source": item.get("source"),
+                                "mirrors": item.get("mirrors", [])
+                            })
+        
+        return sources, None
+    except Exception as e:
+        return None, f"미러 설정 파일 파싱 중 오류 발생: {str(e)}"
 
 # --- 기본 페이지 라우팅 ---
 @app.route('/')
@@ -139,22 +186,56 @@ def get_mirror_ca():
 
 
 # --- YAML 생성 라우팅 ---
+#@app.route('/generate-install-config', methods=['POST'])
+#def generate_install_config():
+#    """폼 데이터로 install-config.yaml 파일을 생성하여 로컬에 저장합니다."""
+#    config_data = request.form.to_dict()
+#    config_data['proxy_enabled'] = 'proxy_enabled' in config_data
+    
+
+#    with open('templates/install-config.yaml.j2') as f:
+#        template_str = f.read()
+#    rendered_yaml = render_template_string(template_str, **config_data)
+    
+#    target_path = os.path.join(CREATE_CONFIG_DIR, 'install-config.yaml')
+#    with open(target_path, 'w', encoding='utf-8') as f:
+#        f.write(rendered_yaml)
+    
+#    return f"✅ install-config.yaml 파일이 {os.path.abspath(CREATE_CONFIG_DIR)}에 생성되었습니다."
+
+
+
+# --- YAML 생성 라우팅 ---
 @app.route('/generate-install-config', methods=['POST'])
 def generate_install_config():
     """폼 데이터로 install-config.yaml 파일을 생성하여 로컬에 저장합니다."""
     config_data = request.form.to_dict()
     config_data['proxy_enabled'] = 'proxy_enabled' in config_data
-    
+
+    # [수정] '미러레지스트리 사용' 체크 시 idms/itms 파일에서 imageContentSources를 동적으로 생성
+    if 'mirror_enabled' in config_data:
+        sources, error = find_and_parse_mirror_yamls()
+        if error:
+            # 오류가 발생하면 사용자에게 알림
+            return f"❌ imageContentSources 생성 실패: {error}"
+        config_data['imageContentSources'] = sources
+    else:
+        config_data['imageContentSources'] = []
 
     with open('templates/install-config.yaml.j2') as f:
         template_str = f.read()
     rendered_yaml = render_template_string(template_str, **config_data)
-    
+
     target_path = os.path.join(CREATE_CONFIG_DIR, 'install-config.yaml')
     with open(target_path, 'w', encoding='utf-8') as f:
         f.write(rendered_yaml)
-    
+
     return f"✅ install-config.yaml 파일이 {os.path.abspath(CREATE_CONFIG_DIR)}에 생성되었습니다."
+
+
+
+
+
 
 @app.route('/generate-agent-config', methods=['POST'])
 def generate_agent_config():
