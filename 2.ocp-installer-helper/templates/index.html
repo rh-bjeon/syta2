@@ -70,6 +70,20 @@
             <textarea name="additionalTrustBundle" id="additionalTrustBundle" rows="10" cols="80" placeholder="여기에 PEM 형식의 CA 인증서를 붙여넣거나 'Mirror CA  불러오기'를 클릭하세요."></textarea><br><br>
             <button type="button" onclick="loadMirrorCa()">Mirror CA 불러오기</button><br><br>
 
+            <!-- [추가] Worker Node 수 선택 -->
+            <div class="mb-3">
+                <label for="worker_replicas" class="form-label">Worker Node 수:</label>
+                <select class="form-select" style="width: auto;" name="worker_replicas" id="worker_replicas">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <br>
+
+
             <button type="submit" data-section="2"><code>install-config.yaml</code> 생성하기</button>
         </form>
         <div class="status-box" id="status-message-2"></div>
