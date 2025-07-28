@@ -248,7 +248,12 @@ def execute_action():
         run_command(f"sudo cp {PREV_APP_CONFIG_DIR}/install-config.yaml {ISO_CREATE_DIR}/")
         run_command(f"sudo cp {PREV_APP_CONFIG_DIR}/agent-config.yaml {ISO_CREATE_DIR}/")
         run_command(f"sudo chown -R apache:apache {ISO_CREATE_DIR}")
-        cmd = f"sudo openshift-install agent create image --dir={ISO_CREATE_DIR}"
+#        run_command(f"sudo mkdir {ISO_CREATE_DIR}/manifests/")
+#        run_command(f"sudo cp /ocp_install/oc-mirror/mirror-images/working-dir/cluster-resources/idms-oc-mirror.yaml {ISO_CREATE_DIR}/manifests/")
+#        run_command(f"sudo cp /ocp_install/oc-mirror/mirror-images/working-dir/cluster-resources/itms-oc-mirror.yaml {ISO_CREATE_DIR}/manifests/")
+#        run_command(f"sudo cp /ocp_install/oc-mirror/mirror-images/working-dir/cluster-resources/signature-configmap.yaml {ISO_CREATE_DIR}/manifests/")
+#        run_command(f"sudo cp /ocp_install/oc-mirror/mirror-images/working-dir/cluster-resources/updateService.yaml {ISO_CREATE_DIR}/manifests/")
+        cmd = f"openshift-install agent create image --dir={ISO_CREATE_DIR}"
         return jsonify(run_command(cmd))
 
     if action_type == 'oc_login':
