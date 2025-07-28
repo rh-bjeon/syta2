@@ -20,7 +20,7 @@
 # --- 변수 정의 ---
 APP_BASE_DIR="/var/www/html"
 APP_NAME="ocp-create-iso"
-APP_PORT=5024
+APP_PORT=5022
 SERVICE_NAME="ocp-create-iso"
 APP_USER="apache"
 APP_GROUP="apache"
