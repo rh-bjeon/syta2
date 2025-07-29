@@ -244,6 +244,8 @@ def execute_action():
 
     # --- Section 5 & 6 Actions ---
     if action_type == 'create_iso':
+        run_command(f"sudo rm -f /ocp_install/create-iso/.openshift_install*")
+        run_command(f"sudo rm -rf /ocp_install/create-iso/")
         run_command(f"sudo mkdir -p {ISO_CREATE_DIR}")
         run_command(f"sudo cp {PREV_APP_CONFIG_DIR}/install-config.yaml {ISO_CREATE_DIR}/")
         run_command(f"sudo cp {PREV_APP_CONFIG_DIR}/agent-config.yaml {ISO_CREATE_DIR}/")
@@ -265,18 +267,17 @@ def execute_action():
         return jsonify(run_command(f"export KUBECONFIG={kubeconfig_path} && oc get node"))
 
     if action_type == 'apply_policies':
-        cmd1 = "export KUBECONFIG={0}/auth/kubeconfig && oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{{\"spec\":{{\"managementState\": \"Managed\"}}}}'".format(ISO_CREATE_DIR)
-        cmd2 = "export KUBECONFIG={0}/auth/kubeconfig && oc patch OperatorHub cluster --type json -p '[{{\"op\": \"add\", \"path\": \"/spec/disableAllDefaultSources\", \"value\": true}}]'".format(ISO_CREATE_DIR)
-        results_dirs = glob.glob(f"{MIRROR_IMAGES_DIR}/working-dir/results-*")
-        if not results_dirs:
-            return jsonify({"success": False, "error": "results-XXXXX 디렉터리를 찾을 수 없습니다."})
-        latest_results_dir = max(results_dirs, key=os.path.getmtime)
-        cmd3 = f"export KUBECONFIG={ISO_CREATE_DIR}/auth/kubeconfig && oc apply -f {latest_results_dir}/"
+        cmd1 = f"export KUBECONFIG={ISO_CREATE_DIR}/auth/kubeconfig && oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{{\"spec\":{{\"managementState\": \"Managed\"}}}}'"
+        cmd2 = f"export KUBECONFIG={ISO_CREATE_DIR}/auth/kubeconfig && oc patch OperatorHub cluster --type json -p '[{{\"op\": \"add\", \"path\": \"/spec/disableAllDefaultSources\", \"value\": true}}]'"
+        yaml_files_path = '/ocp_install/oc-mirror/mirror-images/working-dir/cluster-resources'
+        cmd3 = f"export KUBECONFIG={ISO_CREATE_DIR}/auth/kubeconfig && oc apply -f {yaml_files_path}"
         full_command = f"{cmd1} && {cmd2} && {cmd3}"
         return jsonify(run_command(full_command))
 
     return jsonify({"success": False, "error": "알 수 없는 액션 타입입니다."})
 
+
+
 # --- 애플리케이션 실행 ---
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5022)
+    app.run(debug=True, host='0.0.0.0', port=5024)
