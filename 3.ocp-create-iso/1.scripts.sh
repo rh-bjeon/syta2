@@ -133,6 +133,8 @@ firewall-cmd --permanent --add-port=22623/tcp
 firewall-cmd --permanent --add-port=9000/tcp
 firewall-cmd --permanent --add-port=80/tcp
 firewall-cmd --permanent --add-port=443/tcp
+# ntp 포트
+firewall-cmd --add-service=ntp --permanent
 # DNS 포트
 firewall-cmd --permanent --add-service=dns
 firewall-cmd --reload
