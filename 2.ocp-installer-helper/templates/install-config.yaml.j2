@@ -6,7 +6,7 @@ compute:
 - architecture: amd64
   hyperthreading: Enabled
   name: worker
-  replicas: {{ worker_replicas | default(3) }}
+  replicas: {{ worker_replicas }}
 controlPlane:
   architecture: amd64
   hyperthreading: Enabled
