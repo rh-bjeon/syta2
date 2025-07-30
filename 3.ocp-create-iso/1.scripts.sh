@@ -105,11 +105,12 @@ apache ALL=(ALL) NOPASSWD: /usr/local/bin/mirror-registry
 apache ALL=(ALL) NOPASSWD: /usr/bin/update-ca-trust
 apache ALL=(ALL) NOPASSWD: /usr/local/bin/oc
 apache ALL=(ALL) NOPASSWD: /usr/local/bin/openshift-install
-echo 'apache ALL=(ALL) NOPASSWD: /usr/bin/cat' | sudo tee /etc/sudoers.d/ocp-helper-cat
 EOF
 chmod 440 /etc/sudoers.d/ocp-iso-creator
 echo "sudoers 파일 생성 완료."
 echo
+
+echo 'apache ALL=(ALL) NOPASSWD: /usr/bin/cat' | sudo tee /etc/sudoers.d/ocp-helper-cat
 
 
 # /opt 디렉터리에 대한 쓰기 권한 허용
