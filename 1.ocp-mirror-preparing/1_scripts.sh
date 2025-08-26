@@ -71,7 +71,7 @@ sudo systemctl restart httpd
 
 # 2. 필수 시스템 패키지 설치
 echo ">>> [단계 1/7] 필수 시스템 패키지 설치"
-#dnf install -y python3 python3-pip git gcc python3-devel rsync
+dnf install -y python3 python3-pip git gcc python3-devel rsync
 echo "Gunicorn (WSGI 서버)을 설치합니다..."
 sudo pip3 install beautifulsoup4 requests gunicorn 
 echo "패키지 설치 완료."
@@ -132,7 +132,7 @@ After=network.target
 User=$APP_USER
 Group=$APP_GROUP
 WorkingDirectory=$APP_TARGET_DIR
-ExecStart=$(command -v gunicorn) --workers 4 --bind 0.0.0.0:${APP_PORT} --timeout 900 app:app
+ExecStart=gunicorn --workers 4 --bind 0.0.0.0:${APP_PORT} --timeout 900 app:app
 Restart=always
 
 [Install]
